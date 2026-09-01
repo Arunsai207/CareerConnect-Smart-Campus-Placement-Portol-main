@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🎓 CareerConnect: An AI-Powered Intelligent Campus Placement and Career Development Platform
 
 CareerConnect is an intelligent AI-powered campus placement management platform designed to bridge the gap between students, training and placement officers, and recruiters. It provides a centralized ecosystem for skill assessment, interview preparation, resume enhancement, and placement tracking. The platform leverages Artificial Intelligence and data-driven analytics to evaluate student performance,
@@ -292,3 +293,6 @@ Open `index.html` in a browser.
 * **🤖 Advanced AI Career Recommendations** *(Additional Enhancement)*
   Integrate AI-driven career guidance to provide personalized learning paths, skill recommendations, and job role suggestions based on student performance and industry requirements.
   
+=======
+# Campus-Placement-Portol-main
+>>>>>>> 4d4088e908b21ff6a868d0e9f8b35f6f65d3d9a9
