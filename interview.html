@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mock Interview Studio</title>
+    <link rel="stylesheet" href="interview.css" />
+  </head>
+  <body>
+    <div class="interview-app">
+      <div class="interview-shell">
+        <header class="topbar">
+          <div class="brand">
+            <span class="brand-badge"></span>
+            <span>CareerConnect</span>
+          </div>
+
+          <div class="header-center">
+            <strong>Mock Interview</strong>
+          </div>
+
+          <div class="header-meta">
+            <div class="live-pill">
+              <span class="live-dot"></span>
+              <span id="liveStatus">Ready</span>
+            </div>
+            <div class="action-buttons">
+              <button class="icon-btn" id="toggleMicBtn">Mic</button>
+              <button class="icon-btn" id="stopInterviewBtn">Pause</button>
+              <button class="primary-btn" id="startInterviewBtn">Start Interview</button>
+            </div>
+          </div>
+        </header>
+
+        <main class="main-grid">
+          <section class="left-stage">
+            <div class="video-row">
+              <div class="video-card videocard-empty">
+                <div class="avatar-wrap">
+                  <div class="avatar"></div>
+                </div>
+                <div class="cam-badge">Candidate</div>
+                <video id="localVideo" autoplay muted playsinline></video>
+              </div>
+
+              <div class="video-card">
+                <div class="avatar-wrap">
+                  <div class="avatar" style="width: 200px; height: 200px; background: radial-gradient(circle at 50% 18%, #f4d7c0 0%, #d5b7a4 22%, #2b3d56 23%, #121c2f 100%);"></div>
+                </div>
+                <div class="cam-badge">Interviewer</div>
+              </div>
+            </div>
+
+            <div class="control-strip">
+              <div class="control-group">
+                <button class="control-pill active">AI Interviewer</button>
+                <button class="control-pill">Live Notes</button>
+                <button class="control-pill">Voice Match</button>
+              </div>
+              <div class="control-group">
+                <button class="control-pill">Mute</button>
+                <button class="control-pill">Share</button>
+                <button class="control-pill red">End Call</button>
+              </div>
+            </div>
+
+            <div class="content-panel">
+              <div class="tabs">
+                <div class="tab active">Transcript</div>
+                <div class="tab">Notes</div>
+                <div class="tab">Insights</div>
+              </div>
+
+              <div class="panel-body">
+                <div id="transcriptList" class="transcript-list"></div>
+                <div class="textbox">
+                  <input id="answerInput" type="text" placeholder="Type your answer or use voice capture..." />
+                  <button id="sendAnswerBtn">Send</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="right-sidebar">
+            <div class="side-panel">
+              <h3>Current Question</h3>
+              <div class="question-block">
+                <span class="small-label">Interview round</span>
+                <h4 id="questionText">Your interview question will appear here.</h4>
+              </div>
+
+              <div class="question-meta">
+                <div class="metric-card">
+                  <span>Time</span>
+                  <strong id="timerValue">00:00</strong>
+                </div>
+                <div class="metric-card">
+                  <span>Round</span>
+                  <strong>01 / 05</strong>
+                </div>
+              </div>
+
+              <div class="quick-actions" style="margin-top: 16px;">
+                <button id="nextQuestionBtn">Next Question</button>
+                <button>Evaluate Answer</button>
+                <button class="danger">Report Issue</button>
+              </div>
+            </div>
+
+            <div class="side-panel">
+              <h3>AI Evaluation</h3>
+              <div class="progress-ring" aria-label="completion progress">
+                <div class="progress-inner">50%</div>
+              </div>
+
+              <div class="score-list">
+                <div class="score-row">
+                  <div class="score-label"><span>Communication</span><span>86%</span></div>
+                  <div class="bar"><span style="width: 86%;"></span></div>
+                </div>
+                <div class="score-row">
+                  <div class="score-label"><span>Confidence</span><span>79%</span></div>
+                  <div class="bar"><span style="width: 79%;"></span></div>
+                </div>
+                <div class="score-row">
+                  <div class="score-label"><span>Technical Fit</span><span>81%</span></div>
+                  <div class="bar"><span style="width: 81%;"></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="side-panel">
+              <h3>Interview Status</h3>
+              <div class="status-grid">
+                <div class="status-item">
+                  Camera
+                  <strong id="cameraState">Not started</strong>
+                </div>
+                <div class="status-item">
+                  Microphone
+                  <strong id="micState">Muted</strong>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </main>
+      </div>
+    </div>
+
+    <script src="interview.js"></script>
+  </body>
+</html>

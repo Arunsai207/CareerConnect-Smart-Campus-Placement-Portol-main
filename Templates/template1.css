@@ -65,7 +65,7 @@
   width: 100%;
   max-width: 950px;
   background-color: #ffffff;
-  min-height: 1000px;
+  min-height: 0;
   display: grid;
   grid-template-columns: 1fr 2fr;
   margin: 40px;

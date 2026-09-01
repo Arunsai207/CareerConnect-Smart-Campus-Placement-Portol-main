@@ -75,6 +75,40 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
+    .performance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .performance-card {
+      padding: 18px;
+      border-radius: 8px;
+      background: #f5f7fa;
+      border-left: 4px solid #2c3e50;
+    }
+
+    .performance-card h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .performance-card strong,
+    .performance-card small {
+      display: block;
+    }
+
+    .performance-card strong {
+      font-size: 22px;
+      color: #2c3e50;
+    }
+
+    .performance-card small,
+    .performance-note {
+      color: #667085;
+    }
+
     .form-group {
       margin-bottom: 15px;
     }
@@ -175,9 +209,7 @@
 
     <div class="main-content">
       <h1>Welcome, <span id="fullName">Student</span></h1>
-      <div id="content">
-        <p>Select an option from the sidebar to view more details.</p>
-      </div>
+      <div id="content"></div>
     </div>
   </div>
 
@@ -191,11 +223,60 @@
         document.getElementById('fullName').textContent = fullName;
       }
 
+      async function showDashboard() {
+        const username = localStorage.getItem('username') || 'Not available';
+        let aptitudeScore = localStorage.getItem('aptitudeScore') || 'Not attempted';
+        let performanceMessage = '';
+        if (username !== 'Not available') {
+          try {
+            const response = await fetch(`http://localhost:3000/api/students/${encodeURIComponent(username)}/performance`, {
+              headers: { Accept: 'application/json' },
+              cache: 'no-store'
+            });
+            const responseText = await response.text();
+            let performance;
+            try {
+              performance = JSON.parse(responseText);
+            } catch (parseError) {
+              throw new Error(`Server returned ${response.status} ${response.statusText}, not JSON. Restart Node with "npm start".`);
+            }
+            if (!response.ok) {
+              throw new Error(performance.error || `Request failed (${response.status})`);
+            }
+            if (performance.aptitude) {
+              aptitudeScore = `${performance.aptitude.score}/${performance.aptitude.total} (${performance.aptitude.accuracy}%)`;
+            } else {
+              performanceMessage = '<p class="performance-note">No aptitude result was found for this username. Use the same username in the quiz and dashboard.</p>';
+            }
+          } catch (error) {
+            console.error('Unable to load aptitude performance:', error);
+            performanceMessage = `<p class="performance-note">Performance could not be loaded: ${error.message}</p>`;
+          }
+        }
+        const dsaScore = localStorage.getItem('dsaScore') || 'Not attempted';
+        const interviewScore = localStorage.getItem('interviewScore') || 'Not attempted';
+        const resumeScore = localStorage.getItem('resumeScore') || 'Not scanned';
+
+        content.innerHTML = `
+          <h2>Dashboard</h2>
+          <p>Welcome to your dashboard. Here is an overview of your activities and performance.</p>
+          <p><strong>Username:</strong> ${username}</p>
+          <div class="performance-grid">
+            <div class="performance-card"><h3>Aptitude</h3><strong>${aptitudeScore}</strong><small>Latest score</small></div>
+            <div class="performance-card"><h3>DSA Practice</h3><strong>${dsaScore}</strong><small>Latest score</small></div>
+            <div class="performance-card"><h3>Mock Interview</h3><strong>${interviewScore}</strong><small>Latest score</small></div>
+            <div class="performance-card"><h3>Resume ATS</h3><strong>${resumeScore}</strong><small>Latest score</small></div>
+          </div>
+          ${performanceMessage || '<p class="performance-note">Complete an activity to see its score here. Scores are saved by each activity when available.</p>'}
+        `;
+      }
+
       // Dashboard Section
-      document.getElementById('dashboard').addEventListener('click', function () {
-        content.innerHTML =
-          '<h2>Dashboard</h2><p>Welcome to your dashboard. Here you will find an overview of your activities and performance.</p>';
+      document.getElementById('dashboard').addEventListener('click', function (event) {
+        event.preventDefault();
+        showDashboard();
       });
+      showDashboard();
 
       // Aptitude Section with two inner buttons
       document.getElementById('aptitude').addEventListener('click', function (event) {
@@ -221,7 +302,7 @@
             <button id="interButton" class="btn">Start Interview</button>
             `;
         document.getElementById('interButton').addEventListener('click', function () {
-          window.location.href = 'http://localhost:8505';
+          window.location.href = 'interview.html';
         });
       });
 

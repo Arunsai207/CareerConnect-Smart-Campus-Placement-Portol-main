@@ -1,11 +1,16 @@
 function template_selector() {
-    if ($('#template_1').prop('checked') == true) {
+    if ($('#template_1').is(':checked')) {
         generateCV('Template_1');
     }
-    else if ($('#template_2').prop('checked') == true) {
+    else if ($('#template_2').is(':checked')) {
         generateCV('Template_2');
     }
-    
+    else if ($('#template_3').is(':checked')) {
+        generateCV('Template_3');
+    }
+    else if ($('#template_4').is(':checked')) {
+        generateCV('Template_4');
+    }
     else {
         alert("Please select a template.");
     }
@@ -26,17 +31,28 @@ function printer() {
     setTimeout(visibler, 500);
 }
 
-for (let i = 0; i < 3; i++) {
-    document.querySelectorAll(`.printCv`)[i].addEventListener('click', printer);
-}
+document.querySelectorAll('.printCv').forEach(el => el.addEventListener('click', printer));
 
 function generateCV(template) {
-
-    document.getElementById('form3').classList.remove('active');
-    if (template == 'Template_3') { document.getElementById(template).style.display = 'block'; }
-    else { document.getElementById(template).style.display = 'flex'; }
-
+    document.querySelectorAll('.template').forEach((element) => {
+        element.style.display = 'none';
+    });
+    const selectedTemplate = document.getElementById(template);
+    if (!selectedTemplate) {
+        alert('The selected resume template could not be loaded.');
+        return;
+    }
+    document.querySelectorAll('form.step').forEach((form) => {
+        form.classList.remove('active');
+        form.style.display = 'none';
+    });
+    selectedTemplate.style.display = 'block';
+    selectedTemplate.style.visibility = 'visible';
+    selectedTemplate.style.opacity = '1';
     document.getElementById('nav').style.display = 'none';
+    window.scrollTo(0, 0);
+
+    visibler();
 
 
     //  **********    **********  Image(Resume) Download/ PDF   **********    **********    **********
@@ -57,12 +73,18 @@ function generateCV(template) {
 
     //  **********      Profile Image       *********
 
-    let file = document.getElementById('inpImg').files[0];
-    let reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onloadend = function () {
-        document.getElementById(`${template}`).getElementsByClassName('profilepic')[0].src = reader.result;
-    };
+    let fileInput = document.getElementById('inpImg');
+    let file = fileInput && fileInput.files && fileInput.files[0];
+    if (file) {
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = function () {
+            const imgEl = document.getElementById(`${template}`).getElementsByClassName('profilepic')[0];
+            if (imgEl) imgEl.src = reader.result;
+        };
+    } else {
+        // No uploaded image — leave default placeholder intact
+    }
 
     //  **********    **********    **********    **********    **********
 
@@ -137,9 +159,25 @@ function generateCV(template) {
                 <h4 class="uni">${school}</h4>
             </div>`)
         }
+        else if (template == 'Template_3') {
+            $('.t3 .left_side .education .content').append(`
+            <div class="entry">
+                <div class="meta"><span>${srt_date} - ${end_date}</span></div>
+                <h4>${degree}</h4>
+                <p>${school}</p>
+            </div>`)
+        }
+        else if (template == 'Template_4') {
+            $('.t4 .content-area .education .content').append(`
+            <div class="entry">
+                <div class="meta"><span>${srt_date} - ${end_date}</span></div>
+                <h4>${degree}</h4>
+                <p>${school}</p>
+            </div>`)
+        }
        
-
-
+ 
+ 
     }
 
 
@@ -187,6 +225,22 @@ function generateCV(template) {
             <div class="box"><div class="text">${job_title}</div><div class="exp">${work_desc}</div></div>
         </div>`)
         }
+        else if (template == 'Template_3') {
+            $('.t3 .right_side .experience .content').append(`
+            <div class="entry">
+                <div class="meta"><span>${srt_date} - ${end_date}</span><span>${company_name}</span></div>
+                <h4>${job_title}</h4>
+                <p>${work_desc}</p>
+            </div>`)
+        }
+        else if (template == 'Template_4') {
+            $('.t4 .content-area .experience .content').append(`
+            <div class="entry">
+                <div class="meta"><span>${srt_date} - ${end_date}</span><span>${company_name}</span></div>
+                <h4>${job_title}</h4>
+                <p>${work_desc}</p>
+            </div>`)
+        }
        
     }
 
@@ -204,6 +258,12 @@ function generateCV(template) {
         }
         else if (template == 'Template_2') {
             $('.t2 .lower .lower_left .skills .content').append(`<div class="skill">${skill}</div>`)
+        }
+        else if (template == 'Template_3') {
+            $('.t3 .left_side .skills .list').append(`<span>${skill}</span>`)
+        }
+        else if (template == 'Template_4') {
+            $('.t4 .sidebar .skills .list').append(`<span>${skill}</span>`)
         }
         
     }
@@ -226,10 +286,16 @@ function generateCV(template) {
         else if (template == 'Template_2') {
             $('.t2 .lower .lower_left .interests .content').append(`<div class="con">${interest}</div>`);
         }
+        else if (template == 'Template_3') {
+            $('.t3 .right_side .interests .list').append(`<span>${interest}</span>`)
+        }
+        else if (template == 'Template_4') {
+            $('.t4 .sidebar .interests .list').append(`<span>${interest}</span>`)
+        }
        
     }
 
-  
+   
 
     //  **********    Languages    **********
 
@@ -247,6 +313,12 @@ function generateCV(template) {
         else if (template == 'Template_2') {
             $('.t2 .lower .lower_left .languages .content .con').append(`<div class="lang">${lang}</div>`);
         }
+        else if (template == 'Template_3') {
+            $('.t3 .right_side .languages .list').append(`<span>${lang}</span>`)
+        }
+        else if (template == 'Template_4') {
+            $('.t4 .sidebar .languages .list').append(`<span>${lang}</span>`)
+        }
        
     }
 
@@ -263,6 +335,12 @@ function generateCV(template) {
         else if (template == 'Template_2') {
             $('.t2 .lower_right .achievements .content .con').append(`<div class="val">${achv}</div>`)
         }
+        else if (template == 'Template_3') {
+            $('.t3 .right_side .achievements .content').append(`<div class="entry"><p>${achv}</p></div>`)
+        }
+        else if (template == 'Template_4') {
+            $('.t4 .content-area .achievements .content').append(`<div class="entry"><p>${achv}</p></div>`)
+        }
        
     }
 
@@ -278,6 +356,12 @@ function generateCV(template) {
         }
         else if (template == 'Template_2') {
             $('.t2 .lower_right .profile').append(`<div class="content">${profile}</div>`)
+        }
+        else if (template == 'Template_3') {
+            $('.t3 .right_side .profile .content').append(`<div class="entry"><p>${profile}</p></div>`)
+        }
+        else if (template == 'Template_4') {
+            $('.t4 .content-area .profile .content').append(`<div class="entry"><p>${profile}</p></div>`)
         }
         
     }

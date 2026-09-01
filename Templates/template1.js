@@ -7,7 +7,10 @@ function appender(z, value) {
 }
 
 window.onload = function () {
-    document.getElementByClassName('t1')[0].getElementsByClassName("one")[0].click();
+    const template = document.getElementsByClassName('t1')[0];
+    if (template) {
+        template.getElementsByClassName("one")[0].click();
+    }
 };
 
 $(document).ready(function () {

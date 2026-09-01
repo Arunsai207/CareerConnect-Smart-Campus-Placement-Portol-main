@@ -25,8 +25,10 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"></script>
     <script src="https://superal.github.io/canvas2image/canvas2image.js"></script>
     <link rel="stylesheet" href="css/form.css">
-    <link rel="stylesheet" href="./templates/template1.css">
-    <link rel="stylesheet" href="./templates/template2.css">
+    <link rel="stylesheet" href="./Templates/template1.css">
+    <link rel="stylesheet" href="./Templates/template2.css">
+    <link rel="stylesheet" href="./Templates/template3.css">
+    <link rel="stylesheet" href="./Templates/template4.css">
 </head>
 
 <body>
@@ -89,17 +91,23 @@
 
                     <div class="col-md-5 mt-3">
                         <label for="country" class="form-label">Country</label>
-                        <input type="text" class="form-control" id="country" placeholder="Enter country">
+                        <select class="form-select" id="country">
+                            <option value="">Select Country</option>
+                        </select>
                     </div>
 
                     <div class="col-md-4 mt-3">
                         <label for="state" class="form-label">State</label>
-                        <input type="text" class="form-control" id="state" placeholder="Enter state">
+                        <select class="form-select" id="state" disabled>
+                            <option value="">Select State</option>
+                        </select>
                     </div>
 
                     <div class="col-md-3 mt-3">
                         <label for="city" class="form-label">City</label>
-                        <input type="text" class="form-control" id="city" placeholder="Enter city">
+                        <select class="form-select" id="city" disabled>
+                            <option value="">Select City</option>
+                        </select>
                     </div>
 
                     <div class="row">
@@ -233,7 +241,7 @@
                                         education</button>
                                 </div>
                             </div>
-                        </div
+                        </div>
                     </div>
                     <div class="fc2">
                         <div class="flip-card card-container  p-2 mb-4 bg-white ">
@@ -504,6 +512,30 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col d-flex justify-content-center align-items-center">
+                                <div class="card p-1" onclick=" templateRadioSelector(this)">
+                                    <img src="images/T1.PNG" class="card-img-top" alt="...">
+                                    <div class="card-body">
+                                        <div class="btn_box container d-block text-center">
+                                            <h5 class="card-title">Modern</h5>
+                                            <input class="form-check-input" type="radio" name="selected_template"
+                                                id="template_3">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col d-flex justify-content-center align-items-center">
+                                <div class="card p-1" onclick=" templateRadioSelector(this)">
+                                    <img src="images/T2.PNG" class="card-img-top" alt="...">
+                                    <div class="card-body">
+                                        <div class="btn_box container d-block text-center">
+                                            <h5 class="card-title">Executive</h5>
+                                            <input class="form-check-input" type="radio" name="selected_template"
+                                                id="template_4">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -626,7 +658,7 @@
             </div>
             <div class="lower">
                 <div class="lower_left">
-                    <img src="./templates/mdp.png" class="profilepic" alt="Max">
+                    <img src="images/T1.PNG" class="profilepic" alt="Profile">
                     <div class="header personal">
                         <div class="title">Personal</div>
                         <div class="content">
@@ -714,10 +746,132 @@
                 PDF</button>
         </div>
     </div>
+    <div class="t3 container-fluid template" style="display:none; background-color: aliceblue;" id="Template_3">
+        <a onclick="backToForm('t3')">
+            <div class="back-to-form"><span><i class="fas fa-angle-double-left fa-3x"></i></span><span
+                    style="font-size: 23px; margin-left: 10px; margin-right: 10px;">Back to form</span>
+            </div>
+        </a>
+        <div class="palette">
+            <span class="pelement one"></span>
+            <span class="pelement two"></span>
+            <span class="pelement three"></span>
+            <span class="pelement four"></span>
+            <span class="pelement five"></span>
+        </div>
+        <div class="resume-shell template-3-shell" id="target">
+            <div class="left_side">
+                <div class="profile-block">
+                    <img src="images/T1.PNG" class="profilepic" alt="Profile">
+                    <h2 id="t_name">Arun Sai</h2>
+                    <p id="t_email">mikkiliarunsai9@gmail.com</p>
+                </div>
+                <div class="sidebar-section contact">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><span class="label">Phone</span><span id="t_number">+91 8618736229</span></li>
+                        <li><span class="label">Address</span><span id="t_address">Chennai, Tamil Nadu, India</span></li>
+                        <li><span class="label">LinkedIn</span><span id="t_linkedIn">linkedin.com/me</span></li>
+                        <li><span class="label">Website</span><span id="t_website">www.mywebsite.com</span></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section education">
+                    <h3>Education</h3>
+                    <div class="content"></div>
+                </div>
+                <div class="sidebar-section skills">
+                    <h3>Skills</h3>
+                    <div class="list"></div>
+                </div>
+            </div>
+            <div class="right_side">
+                <div class="section profile"><h2 class="title2">Profile</h2><div class="content"></div></div>
+                <div class="section experience"><h2 class="title2">Experience</h2><div class="content"></div></div>
+                <div class="section achievements"><h2 class="title2">Achievements</h2><div class="content"></div></div>
+                <div class="section interests"><h2 class="title2">Interests</h2><div class="list"></div></div>
+                <div class="section languages"><h2 class="title2">Languages</h2><div class="list"></div></div>
+            </div>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary btn-lg mt-5 mb-5 mx-4 dwnldimage" id="dwnldimage">Download
+                Resume as
+                Image</button>
+            <button type="button" class="btn btn-primary btn-lg mt-5 mb-5 mx-4 printCv" id="printCv">Download Resume as
+                PDF</button>
+        </div>
+    </div>
+    <div class="t4 container-fluid template" style="display:none; background-color: aliceblue;" id="Template_4">
+        <a onclick="backToForm('t4')">
+            <div class="back-to-form"><span><i class="fas fa-angle-double-left fa-3x"></i></span><span
+                    style="font-size: 23px; margin-left: 10px; margin-right: 10px;">Back to form</span>
+            </div>
+        </a>
+        <div class="palette">
+            <span class="pelement one"></span>
+            <span class="pelement two"></span>
+            <span class="pelement three"></span>
+            <span class="pelement four"></span>
+            <span class="pelement five"></span>
+        </div>
+        <div class="resume-shell template-4-shell" id="target">
+            <div class="topbar">
+                <div>
+                    <p class="eyebrow">Professional Profile</p>
+                    <h1 id="t_name">Arun Sai</h1>
+                </div>
+                <div class="meta">
+                    <span id="t_email">mikkiliarunsai9@gmail.com</span>
+                    <span id="t_number">+91 8618736229</span>
+                </div>
+            </div>
+            <div class="main-grid">
+                <div class="sidebar">
+                    <div class="photo-wrap">
+                        <img src="images/T1.PNG" class="profilepic" alt="Profile">
+                    </div>
+                    <div class="info-group">
+                        <h3>About</h3>
+                        <p id="t_gender">Male</p>
+                        <p id="t_dob">06/08/2003</p>
+                        <p id="t_address">Chennai, Tamil Nadu, India</p>
+                    </div>
+                    <div class="info-group skills">
+                        <h3>Skills</h3>
+                        <div class="list"></div>
+                    </div>
+                    <div class="info-group languages">
+                        <h3>Languages</h3>
+                        <div class="list"></div>
+                    </div>
+                    <div class="info-group interests">
+                        <h3>Interests</h3>
+                        <div class="list"></div>
+                    </div>
+                </div>
+                <div class="content-area">
+                    <div class="section profile"><h2>Profile</h2><div class="content"></div></div>
+                    <div class="section education"><h2>Education</h2><div class="content"></div></div>
+                    <div class="section experience"><h2>Experience</h2><div class="content"></div></div>
+                    <div class="section achievements"><h2>Achievements</h2><div class="content"></div></div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary btn-lg mt-5 mb-5 mx-4 dwnldimage" id="dwnldimage">Download
+                Resume as
+                Image</button>
+            <button type="button" class="btn btn-primary btn-lg mt-5 mb-5 mx-4 printCv" id="printCv">Download Resume as
+                PDF</button>
+        </div>
+    </div>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="./templates/template2.js"></script>
+    <script src="./Templates/template1.js"></script>
+    <script src="./Templates/template2.js"></script>
+    <script src="./Templates/template3.js"></script>
+    <script src="./Templates/template4.js"></script>
+    <script src="chatbot.js" defer></script>
 </body>
 <script>
     $(document).ready(function () {
@@ -760,19 +914,33 @@
         document.getElementById('nav').style.display = 'block';
         document.getElementById('form3').classList.add('active');
         $('.t1 .left_side .education ul').html('');
-        $('.t2 .lower_right .education .content').html(''); 
+        $('.t2 .lower_right .education .content').html('');
+        $('.t3 .left_side .education .content').html('');
+        $('.t4 .content-area .education .content').html('');
         $('.t1 .right_side .experience').html('<h2 class="title2">Experience</h2>');
         $('.t2 .lower_right .experience .content').html('');
+        $('.t3 .right_side .experience .content').html('');
+        $('.t4 .content-area .experience .content').html('');
         $('.t1 .right_side .skills .box').html('');
         $('.t2 .lower .lower_left .skills .content').html('');
+        $('.t3 .left_side .skills .list').html('');
+        $('.t4 .sidebar .skills .list').html('');
         $('.t1 .left_side .language ul').html('');
         $('.t2 .lower .lower_left .languages .content .con').html('');
+        $('.t3 .right_side .languages .list').html('');
+        $('.t4 .sidebar .languages .list').html('');
         $('.t1 .right_side .achievements').html(`<h2 class="title2">Achievements</h2>`);
         $('.t2 .lower_right .achievements .content .con').html('');
+        $('.t3 .right_side .achievements .content').html('');
+        $('.t4 .content-area .achievements .content').html('');
         $('.t1 .right_side .prof').html('<h2 class="title2">Profile</h2>')
         $('.t2 .lower_right .profile').html('<div class="hr title">Profile</div>')
+        $('.t3 .right_side .profile .content').html('');
+        $('.t4 .content-area .profile .content').html('');
         $('.t1 .right_side .interest ul').html('');
         $('.t2 .lower .lower_left .interests .content').html('');
+        $('.t3 .right_side .interests .list').html('');
+        $('.t4 .sidebar .interests .list').html('');
     }
 </script>
 </html>

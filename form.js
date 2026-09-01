@@ -450,104 +450,113 @@ $("#add_lang").click(function (e) {
 
 //  **********    **********    Country, state and city API   **********    **********
 
-let auth_token;
-$('#country').click(function () {
+// NOTE: The previous implementation used universal-tutorial.com to fetch countries and placed country_name
+// as the <option> value. The CountryStateCity API expects ISO2 country codes (e.g. "IN") in the URL paths,
+// and the universal-tutorial endpoint used in the browser was blocked by CORS. A safe production approach is to
+// host a small server-side proxy that keeps the API key secret and forwards requests to the external API.
+// Example server endpoints (recommended):
+// GET  /api/locations/countries            -> returns countries (from https://api.countrystatecity.in/v1/countries)
+// GET  /api/locations/states/:countryIso2  -> returns states for the given ISO2 country code
+// GET  /api/locations/cities/:countryIso2/:stateIso2 -> returns cities
+// The client then calls these local endpoints (no CORS issues and API key stays secret).
+
+// Client-side fallback (for quick testing only): call CountryStateCity API directly. DO NOT expose a real key in
+// client JS in production. Replace YOUR_API_KEY with a valid key only for local testing.
+
+$(document).ready(function () {
   getCountries();
-  $('#country').unbind('click');
-})
-
-$(document).ready(function () {
-  $.ajax({
-    type: 'get',
-    url: 'https://www.universal-tutorial.com/api/getaccesstoken',
-    success: function (data) {
-      auth_token = data.auth_token;
-    },
-    error: function (error) {
-      console.log(error);
-    },
-    headers: {
-      "Accept": "application/json",
-      "api-token": "QFZCxL-P9DDVZzxIYTti85dbkTb-RZYqW4fG39dTvmeLJ9TCRmVj-UQSruPENKH3MCw",
-      "user-email": "murtazamister1@gmail.com"
-    }
-  })
-})
-function getCountries() {
-  $.ajax({
-    type: 'get',
-    url: 'https://www.universal-tutorial.com/api/countries',
-    success: function (data) {
-      $('#country').empty();
-      data.forEach((ele) => {
-        $('#country').append(`<option value="${ele.country_name}">${ele.country_name}</option>`);
-      })
-      getStates();
-    },
-    error: function (error) {
-      console.log(error);
-    },
-    headers: {
-      "Authorization": "Bearer " + auth_token,
-      "Accept": "application/json"
-    }
-  })
-}
-function getStates() {
-  const country = $('#country').val();
-  if (!country) return;
-
-  $.ajax({
-    type: 'GET',
-    url: `https://api.countrystatecity.in/v1/countries/${country}/states`,
-    headers: {
-      "X-CSCAPI-KEY": "YOUR_API_KEY" 
-    },
-    success: function (data) {
-      $('#state').empty().append('<option value="">Select State</option>');
-
-      data.forEach((ele) => {
-        $('#state').append(`<option value="${ele.iso2}">${ele.name}</option>`);
-      });
-
-      $('#city').empty().append('<option value="">Select City</option>'); 
-    },
-    error: function (error) {
-      console.error("Error fetching states:", error);
-    }
-  });
-}
-
-function getCities() {
-  const country = $('#country').val();
-  const state = $('#state').val();
-  if (!country || !state) return;
-
-  $.ajax({
-    type: 'GET',
-    url: `https://api.countrystatecity.in/v1/countries/${country}/states/${state}/cities`,
-    headers: {
-      "X-CSCAPI-KEY": "YOUR_API_KEY" // Replace with a valid API key
-    },
-    success: function (data) {
-      $('#city').empty().append('<option value="">Select City</option>');
-
-      data.forEach((ele) => {
-        $('#city').append(`<option value="${ele.name}">${ele.name}</option>`);
-      });
-    },
-    error: function (error) {
-      console.error("Error fetching cities:", error);
-    }
-  });
-}
-
-// Event Listeners
-$(document).ready(function () {
   $('#country').change(getStates);
   $('#state').change(getCities);
 });
 
+function getCountries() {
+  // Keep this declaration for compatibility with an older malformed comment line.
+  var n;
+  // Prefer calling a local proxy: uncomment and use the proxy when available
+  // const url = '/api/locations/countries';
+n  // Fallback: direct CountryStateCity API call (requires API key and may be blocked by CORS if the provider forbids it)
+  // Prefer the local proxy to avoid CORS and to keep the API key secret
+  const url = '/api/locations/countries';
+  $.ajax({
+      type: 'GET',
+      url: url,
+      headers: {
+        // If using direct provider call, set the API key here (only for local testing)
+        // 'X-CSCAPI-KEY': 'YOUR_API_KEY'
+      },
+      success: function (data) {
+        $('#country').empty().append('<option value="">Select Country</option>');
+        // CountryStateCity returns objects with iso2 and name; store iso2 as value so states/cities calls work
+        data.forEach((ele) => {
+          $('#country').append(`<option value="${ele.iso2}">${ele.name}</option>`);
+        });
+      },
+      error: function (error) {
+        const message = error.responseJSON?.error || `Request failed (${error.status})`;
+        console.error('Error fetching countries:', message);
+        $('#country').empty().append(`<option value="">${message}</option>`);
+      }
+  });
+}
+
+function getStates() {
+  const countryIso = $('#country').val();
+  $('#state').empty().append('<option value="">Select State</option>').prop('disabled', true);
+  $('#city').empty().append('<option value="">Select City</option>').prop('disabled', true);
+  if (!countryIso) return;
+  // Prefer local proxy endpoint when available, otherwise call provider directly (may be blocked by CORS)
+  // Prefer the local proxy endpoint
+  const url = `/api/locations/states/${encodeURIComponent(countryIso)}`;
+  $.ajax({
+      type: 'GET',
+      url: url,
+      headers: {
+        // 'X-CSCAPI-KEY': 'YOUR_API_KEY' // only for direct testing; do NOT commit or use in production    
+      },
+      success: function (data) {
+        $('#state').empty().append('<option value="">Select State</option>');
+        data.forEach((ele) => {
+          // state iso2 is used as value so cities endpoint works
+          $('#state').append(`<option value="${ele.iso2}">${ele.name}</option>`);
+        });
+        $('#city').empty().append('<option value="">Select City</option>').prop('disabled', true);
+        $('#state').prop('disabled', false);
+      },
+      error: function (error) {
+        const message = error.responseJSON?.error || error.responseJSON?.details || `Request failed (${error.status})`;
+        console.error('Error fetching states:', message);
+        $('#state').empty().append(`<option value="">${message}</option>`);
+      }
+  });
+}
+
+function getCities() {
+  const countryIso = $('#country').val();
+  const stateIso = $('#state').val();
+  $('#city').empty().append('<option value="">Select City</option>').prop('disabled', true);
+  if (!countryIso || !stateIso) return;
+  // Prefer the local proxy endpoint
+  const url = `/api/locations/cities/${encodeURIComponent(countryIso)}/${encodeURIComponent(stateIso)}`;
+  $.ajax({
+      type: 'GET',
+      url: url,
+      headers: {
+        // 'X-CSCAPI-KEY': 'YOUR_API_KEY' // only for direct testing
+      },
+      success: function (data) {
+        $('#city').empty().append('<option value="">Select City</option>');
+        data.forEach((ele) => {
+          $('#city').append(`<option value="${ele.name}">${ele.name}</option>`);
+        });
+        $('#city').prop('disabled', false);
+      },
+      error: function (error) {
+        const message = error.responseJSON?.error || `Request failed (${error.status})`;
+        console.error('Error fetching cities:', message);
+        $('#city').empty().append(`<option value="">${message}</option>`);
+      }
+  });
+}
 
 //  **********    **********    Profile Images    **********    **********
 
