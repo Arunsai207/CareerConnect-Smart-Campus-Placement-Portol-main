@@ -21,6 +21,11 @@ const transcriptList = document.getElementById('transcriptList');
 const questionText = document.getElementById('questionText');
 const liveStatus = document.getElementById('liveStatus');
 const timerEl = document.getElementById('timerValue');
+const startInterviewBtn = document.getElementById('startInterviewBtn');
+const roundLock = document.getElementById('roundLock');
+const roundLockTitle = document.getElementById('roundLockTitle');
+const roundLockMessage = document.getElementById('roundLockMessage');
+let interviewUnlocked = false;
 const addTranscriptEntry = (speaker, text) => {
   const item = document.createElement('div');
   item.className = `transcript-entry ${speaker === 'AI' ? 'ai' : ''}`;
@@ -199,6 +204,33 @@ const stopListening = () => {
 };
 
 const beginInterview = async () => {
+  if (!interviewUnlocked) {
+    setStatus('Interview is locked');
+    return;
+  }
+
+  const token = localStorage.getItem('careerconnectToken');
+  if (!token) {
+    showInterviewLock('Interview is locked.', 'Please sign in again before starting the interview.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/interview/start', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      showInterviewLock('Interview is locked.', result.message || 'Complete the previous rounds before starting the interview.');
+      return;
+    }
+  } catch (error) {
+    console.error('Interview eligibility error:', error);
+    showInterviewLock('Interview is locked.', 'Unable to verify your qualification status. Please try again.');
+    return;
+  }
+
   state.interviewStarted = true;
   await ensureMedia();
   if (!state.recognition) {
@@ -208,6 +240,55 @@ const beginInterview = async () => {
   updateTimer();
   startTimer();
   askQuestion();
+};
+
+const showInterviewLock = (title, message) => {
+  interviewUnlocked = false;
+  startInterviewBtn.disabled = true;
+  roundLockTitle.textContent = title;
+  roundLockMessage.textContent = message;
+  roundLock.hidden = false;
+  setStatus('Locked');
+};
+
+const loadInterviewEligibility = async () => {
+  const token = localStorage.getItem('careerconnectToken');
+  if (!token) {
+    showInterviewLock('Interview is locked.', 'Please sign in again before starting the interview.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/student/qualification-status', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const status = await response.json();
+    if (!response.ok) {
+      throw new Error(status.message || status.error || 'Unable to load qualification status.');
+    }
+
+    if (status.interview?.unlocked === true) {
+      interviewUnlocked = true;
+      startInterviewBtn.disabled = false;
+      roundLock.hidden = true;
+      setStatus('Ready');
+      return;
+    }
+
+    const aptitudeMessage = status.aptitude?.qualified
+      ? ''
+      : 'Qualify in the Aptitude round first.';
+    const dsaMessage = status.dsa?.qualified
+      ? ''
+      : 'Complete and qualify the DSA round first.';
+    showInterviewLock(
+      'Interview is locked.',
+      [aptitudeMessage, dsaMessage].filter(Boolean).join(' ') || 'Complete the previous rounds before starting the interview.'
+    );
+  } catch (error) {
+    console.error('Qualification status error:', error);
+    showInterviewLock('Interview is locked.', 'Unable to verify your qualification status. Please try again.');
+  }
 };
 
 const addManualResponse = () => {
@@ -249,7 +330,6 @@ document.getElementById('toggleMicBtn').addEventListener('click', () => {
   }
 });
 
-initializeSpeechRecognition();
 updateTimer();
-addTranscriptEntry('AI', 'Welcome. Click Start Interview to begin your mock interview session.');
 questionText.textContent = 'Your interview question will appear here.';
+loadInterviewEligibility();

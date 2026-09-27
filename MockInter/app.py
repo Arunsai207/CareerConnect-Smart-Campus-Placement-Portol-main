@@ -4,34 +4,25 @@ import time
 import os
 import json
 import re
-from google import genai
+import google.generativeai as genai
 import numpy as np
 import speech_recognition as sr
 import cv2
 from datetime import datetime
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from google.api_core.exceptions import GoogleAPIError, NotFound
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
 from PIL import Image as PILImage
-from gtts import gTTS
-import base64
+import streamlit.components.v1 as components
 
 # ---------------------------
 # Environment and API Configuration
 # ---------------------------
 load_dotenv()
-
-API_KEY = os.getenv("API_KEY")
-
-if not API_KEY:
-    st.error("❌ API_KEY was not found in .env")
-    st.stop()
-
-gemini_client = genai.Client(
-    api_key=API_KEY
-)
-
-GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_API_KEY = os.getenv("API_KEY") or os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # ---------------------------
 # MongoDB Connection (for interview feedback and face logs)
@@ -39,6 +30,76 @@ GEMINI_MODEL = "gemini-3.5-flash"
 client = MongoClient("mongodb://localhost:27017/")
 db = client["mock_interviews"]
 feedback_collection = db["feedbacks"]
+
+def technical_is_unlocked(student_id):
+    """Enforce the server-maintained DSA qualification before an interview starts."""
+    try:
+        client = MongoClient("mongodb://localhost:27017/", serverSelectionTimeoutMS=2000)
+        student_db = client["studentDB"]
+        progress = student_db["placementprogresses"].find_one(
+            {"studentId": student_id},
+            {"aptitude.status": 1, "dsa.status": 1, "dsa.submitted": 1}
+        )
+        dsa = (progress or {}).get("dsa", {})
+        aptitude = (progress or {}).get("aptitude", {})
+        if (
+            aptitude.get("status") == "QUALIFIED"
+            and dsa.get("status") == "QUALIFIED"
+            and dsa.get("submitted") is True
+        ):
+            return True
+        config = student_db["assessmentconfigs"].find_one({"key": "default"}) or {"dsaMinScore": 60}
+        if aptitude.get("status") != "QUALIFIED":
+            latest_aptitude = client["quiz_system"]["apti_test"].find_one(
+                {"student_id": student_id}, sort=[("timestamp", -1)]
+            )
+            minimum = float(config.get("aptitudeMinScore", 50))
+            if latest_aptitude and int(latest_aptitude.get("no_of_questions", 0)) > 0:
+                aptitude_qualified = (
+                    float(latest_aptitude.get("marks_achieved", 0))
+                    / float(latest_aptitude["no_of_questions"]) * 100
+                ) >= minimum
+                if aptitude_qualified:
+                    student_db["placementprogresses"].update_one(
+                        {"studentId": student_id},
+                        {"$set": {"studentId": student_id, "aptitude.status": "QUALIFIED"}},
+                        upsert=True
+                    )
+                    aptitude = {"status": "QUALIFIED"}
+        submissions = list(client["DSA_code_app_db"]["submissions"].find({"username": student_id, "status": "accepted"}))
+        qualifies = (
+            aptitude.get("status") == "QUALIFIED"
+            and dsa.get("submitted") is True
+            and any(float(item.get("coding_score", item.get("score", 100))) >= float(config.get("dsaMinScore", 60)) for item in submissions)
+        )
+        if qualifies:
+            student_db["placementprogresses"].update_one(
+                {"studentId": student_id},
+                {"$set": {"studentId": student_id, "dsa.status": "QUALIFIED", "technicalInterview.status": "AVAILABLE"}},
+                upsert=True
+            )
+        return qualifies
+    except Exception:
+        return False
+
+
+def technical_lock_message(student_id):
+    """Return the first unmet placement requirement without starting interview resources."""
+    try:
+        student_db = client["studentDB"]
+        progress = student_db["placementprogresses"].find_one(
+            {"studentId": student_id},
+            {"aptitude.status": 1, "dsa.status": 1, "dsa.submitted": 1}
+        ) or {}
+        aptitude = progress.get("aptitude", {})
+        dsa = progress.get("dsa", {})
+        if aptitude.get("status") != "QUALIFIED":
+            return "Qualify in the Aptitude Round first before accessing the Technical Interview."
+        if dsa.get("status") != "QUALIFIED":
+            return "Complete and qualify the DSA Practice Round before accessing the Technical Interview."
+        return "Complete and qualify the Aptitude and DSA rounds before accessing the Technical Interview."
+    except Exception:
+        return "Complete and qualify the Aptitude and DSA rounds before accessing the Technical Interview."
 
 
 def store_face_log(student_id, message):
@@ -228,74 +289,106 @@ RTC_CONFIGURATION = RTCConfiguration({
 
 
 # ---------------------------
-# Interview Functions
+# Interview Functions (Remaining parts unchanged)
 # ---------------------------
+@st.cache_resource(show_spinner=False)
+def get_gemini_model(excluded_models=()):
+    """Return a configured model that supports generateContent for this API key."""
+    if not GEMINI_API_KEY:
+        raise RuntimeError(
+            "Gemini API key is missing. Add API_KEY or GEMINI_API_KEY to MockInter/.env."
+        )
+
+    preferred_model = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+    candidates = [
+        preferred_model,
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-latest",
+    ]
+
+    try:
+        available_models = {
+            model.name.removeprefix("models/"): model
+            for model in genai.list_models()
+            if "generateContent" in (model.supported_generation_methods or [])
+        }
+    except GoogleAPIError as exc:
+        raise RuntimeError(f"Unable to list Gemini models: {exc}") from exc
+
+    for candidate in candidates:
+        model_name = candidate.removeprefix("models/")
+        if model_name in available_models and model_name not in excluded_models:
+            return genai.GenerativeModel(model_name)
+
+    # Prefer any currently available Flash model when the configured names
+    # have changed or are not enabled for this API key.
+    flash_models = sorted(
+        name for name in available_models
+        if "flash" in name.lower() and name not in excluded_models
+    )
+    if flash_models:
+        return genai.GenerativeModel(flash_models[0])
+
+    available_names = ", ".join(sorted(available_models)) or "none"
+    raise RuntimeError(
+        f"No Gemini model available for generateContent. "
+        f"Configured model: {preferred_model}. Available models: {available_names}"
+    )
+
+
+def generate_gemini_text(prompt):
+    """Generate text and convert provider failures into actionable app errors."""
+    # Model listings can contain retired aliases. Retry once after excluding
+    # a model that the generateContent endpoint rejects.
+    failed_models = set()
+    for _ in range(3):
+        try:
+            model = get_gemini_model(tuple(sorted(failed_models)))
+            response = model.generate_content(prompt)
+            if not response.text:
+                raise RuntimeError("Gemini returned an empty response.")
+            return response.text
+        except NotFound as exc:
+            failed_models.add(model.model_name.removeprefix("models/"))
+            get_gemini_model.clear()
+            if len(failed_models) < 3:
+                continue
+            raise RuntimeError(f"Gemini request failed: {exc}") from exc
+        except GoogleAPIError as exc:
+            raise RuntimeError(f"Gemini request failed: {exc}") from exc
+
+    raise RuntimeError("Gemini request failed: no usable model was available.")
+
+
 def get_gemini_questions(job_role, tech_stack, experience):
     prompt = f"""
-    Generate exactly 5 interview questions for a {job_role} role requiring experience in {tech_stack}.
+    Generate five interview questions for a {job_role} role requiring experience in {tech_stack}.
     The candidate has {experience} years of experience. Ensure the questions assess relevant skills and knowledge.
-
-    IMPORTANT: Return ONLY the questions, one per line, numbered 1 through 5.
-    Format each question exactly like this:
-    1. Question text here?
-    2. Question text here?
-    3. Question text here?
-    4. Question text here?
-    5. Question text here?
-
-    Do not include any other text, headers, or explanations.
+    Return exactly five questions, one per line. You may number them from 1 to 5.
     """
-    try:
-        response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-        raw_text = response.text
-    except Exception as e:
-        st.error(f"Error generating questions: {e}")
-        return _fallback_questions(job_role, tech_stack, experience)
-
-    filtered_questions = _parse_questions(raw_text)
-
-    if not filtered_questions:
-        st.warning("Could not parse AI-generated questions. Using fallback questions.")
-        filtered_questions = _fallback_questions(job_role, tech_stack, experience)
-
-    return filtered_questions
-
-
-def _parse_questions(raw_text):
-    """Robustly parse numbered questions from Gemini response."""
+    questions = generate_gemini_text(prompt).splitlines()
     filtered_questions = []
-    lines = raw_text.strip().split("\n")
-    for line in lines:
-        line = line.strip()
-        if not line:
+    for question in questions:
+        question = re.sub(r"^\s*(?:[-*•]\s+|\d+\s*[\].:)\-]\s*)", "", question).strip()
+        question = re.sub(r"^(?:question\s*)?(?:\d+\s*[\].:)\-]\s*)", "", question,
+                          flags=re.IGNORECASE).strip()
+        if not question or question.lower().startswith(("here are", "questions:")):
             continue
-        # Remove leading bullets, dashes, asterisks
-        cleaned = re.sub(r'^[\s\-\*\•]+', '', line).strip()
-        # Remove bold markers around numbering like **1.** or **1)**
-        cleaned = re.sub(r'^\*\*(\d+[\.\)]\s*)\*\*', r'\1', cleaned).strip()
-        # Match lines starting with a number followed by . or )
-        match = re.match(r'^(\d+)[\.\)]\s*(.*)', cleaned)
-        if match:
-            question_text = match.group(2).strip()
-            if question_text:
-                # Remove any remaining bold/italic markers
-                question_text = re.sub(r'\*\*', '', question_text).strip()
-                question_text = re.sub(r'\*', '', question_text).strip()
-                if not question_text.endswith("?"):
-                    question_text += "?"
-                filtered_questions.append(question_text)
+        if "?" in question:
+            question = question[:question.rfind("?") + 1].strip()
+        elif len(filtered_questions) < 5:
+            question = f"{question}?"
+        else:
+            continue
+        filtered_questions.append(question)
+        if len(filtered_questions) == 5:
+            break
+    if len(filtered_questions) < 5:
+        raise RuntimeError("Gemini returned no usable interview questions. Please try again.")
     return filtered_questions
-
-
-def _fallback_questions(job_role, tech_stack, experience):
-    """Return generic but relevant fallback questions if AI generation fails."""
-    return [
-        f"Can you describe your experience with {tech_stack} and how you've used it in past projects?",
-        f"What are the key challenges you've faced as a {job_role} and how did you overcome them?",
-        f"How do you approach debugging and troubleshooting issues in {tech_stack}?",
-        f"Can you walk me through a project where you used {tech_stack} to solve a complex problem?",
-        f"With {experience} years of experience, how do you stay updated with the latest trends in {tech_stack}?",
-    ]
 
 
 def process_answer(question, answer):
@@ -306,142 +399,84 @@ def process_answer(question, answer):
     Question: {question}
     Answer: {answer}
     """
-    response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-    return response.text
+    return generate_gemini_text(prompt)
 
 
 def record_audio():
-    """Record audio from the microphone and convert to text."""
     recognizer = sr.Recognizer()
-    recognizer.energy_threshold = 300
-    recognizer.dynamic_energy_threshold = True
+    with sr.Microphone() as source:
+        st.write("Recording... Speak now!")
+        audio = recognizer.listen(source, timeout=5)
     try:
-        with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source, duration=1)
-            st.info("🎙️ Listening... Speak now!")
-            audio = recognizer.listen(source, timeout=10, phrase_time_limit=30)
-        st.info("Processing your speech...")
         text = recognizer.recognize_google(audio)
         return text
-    except sr.WaitTimeoutError:
-        return "No speech detected. Please try again."
     except sr.UnknownValueError:
-        return "Could not understand audio. Please speak more clearly."
-    except sr.RequestError as e:
-        return f"Speech recognition service error: {e}"
-    except OSError:
-        return "No microphone found. Please connect a microphone and try again."
+        return "Could not understand audio"
+    except sr.RequestError:
+        return "Could not request results"
 
 
-# ---------------------------
-# AI Voice Interviewer - Text to Speech
-# ---------------------------
-def speak_text(text):
-    """Convert AI text to speech and play it in Streamlit."""
-    try:
-        tts = gTTS(
-            text=text,
-            lang="en",
-            slow=False
-        )
-
-        audio_file = "ai_interviewer_voice.mp3"
-
-        tts.save(audio_file)
-
-        with open(audio_file, "rb") as audio:
-            audio_bytes = audio.read()
-
-        audio_base64 = base64.b64encode(audio_bytes).decode()
-
-        audio_html = f"""
-        <audio autoplay>
-            <source
-                src="data:audio/mp3;base64,{audio_base64}"
-                type="audio/mp3"
-            >
-        </audio>
-        """
-
-        st.markdown(
-            audio_html,
-            unsafe_allow_html=True
-        )
-
-    except Exception as e:
-        st.error(f"Voice generation error: {e}")
-
-
-def ai_ask_question(question):
-    """Display and speak the AI interview question."""
-
-    st.markdown("### 🤖 AI Interviewer")
-
-    st.info(question)
-
-    speak_text(question)
-
-
-# ---------------------------
-# Streamlit Session State Setup
-# ---------------------------
-if "interviews" not in st.session_state:
-    st.session_state.interviews = []
-# ---------------------------
-# Streamlit Session State Setup
-# ---------------------------
-if "interviews" not in st.session_state:
-    st.session_state.interviews = []
-
-# ---------------------------
-# Sidebar: Live Camera Feed (Proctoring)
-# ---------------------------
-with st.sidebar:
-    st.title("Live Camera Feed")
-    camera = webrtc_streamer(
-        key="camera",
-        video_transformer_factory=VideoTransformer,
-        rtc_configuration=RTC_CONFIGURATION,
-        async_processing=True,
-        media_stream_constraints={"video": True, "audio": False}
+def speak_question(question):
+    """Read the current interview question automatically in the browser."""
+    # JSON encoding keeps punctuation and quotes safe inside the component script.
+    safe_question = json.dumps(question)
+    components.html(
+        f"""
+        <script>
+            const question = {safe_question};
+            const speakQuestion = () => {{
+                if (!("speechSynthesis" in window)) return;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(question);
+                utterance.lang = "en-US";
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }};
+            // Voices may load after the component is rendered.
+            window.speechSynthesis.onvoiceschanged = speakQuestion;
+            [100, 500, 1000].forEach((delay) => setTimeout(speakQuestion, delay));
+        </script>
+        """,
+        height=10,
     )
-    if camera and hasattr(camera, "video_transformer") and camera.video_transformer is not None:
-        st.markdown(f"**No Face Warnings:** {camera.video_transformer.no_face_warning_count}")
-        st.markdown(f"**Multiple Face Warnings:** {camera.video_transformer.multiple_face_warning_count}")
-        st.markdown(f"**Eye-Gaze Warnings:** {camera.video_transformer.eye_gaze_warning_count}")
 
 
 # ---------------------------
-# Main Interface: Interview Creation (when no active interview)
+# Streamlit Session State Setup
 # ---------------------------
+if "interviews" not in st.session_state:
+    st.session_state.interviews = []
+
+# Camera and interview resources are deliberately created only after the
+# backend-backed qualification check succeeds and the student starts a session.
+camera = None
+interview_access = False
+active_username = None
+
 if "current_interview" not in st.session_state:
-    st.title("AI Mock Interview")
-    st.subheader("Create and start your AI Mock Interview")
-    if st.button("+ Add New"):
-        st.session_state.show_form = True
-
-    if st.session_state.get("show_form"):
-        with st.form("interview_form"):
-            username = st.text_input("Username", placeholder="Enter your username")
-            job_role = st.text_input("Job Role/Job Position", placeholder="Ex. Full Stack Developer")
-            tech_stack = st.text_input("Job Description/Tech Stack", placeholder="Ex. React, Angular, Node.js")
-            experience = st.number_input("Years of Experience", min_value=0, step=1)
-            interview_mode = st.radio(
-                "Interview Mode",
-                options=["Text + Voice", "Voice Only"],
-                index=1,
-                help="'Text + Voice' allows typing and recording. 'Voice Only' uses only voice for answers."
-            )
-            start_btn = st.form_submit_button("Start Interview")
-            cancel_btn = st.form_submit_button("Cancel")
-            if cancel_btn:
-                st.session_state.show_form = False
-                rerun_app()
-            if start_btn and username and job_role and tech_stack:
-                with st.spinner("Generating interview questions..."):
+    st.title("Technical Interview")
+    username = st.text_input("Enter your username")
+    active_username = username.strip()
+    if active_username:
+        interview_access = technical_is_unlocked(active_username)
+        if not interview_access:
+            st.error(f"Technical Interview is locked. {technical_lock_message(active_username)}")
+            st.stop()
+        st.success("Technical Interview unlocked.")
+        job_role = st.text_input("Job Role/Job Position", placeholder="Ex. Full Stack Developer")
+        tech_stack = st.text_input("Job Description/Tech Stack", placeholder="Ex. React, Angular, Node.js")
+        experience = st.number_input("Years of Experience", min_value=0, step=1)
+        start_btn = st.button("Start Technical Interview", disabled=not interview_access)
+        if start_btn:
+            if not active_username or not job_role or not tech_stack:
+                st.error("Username, job role, and tech stack are required.")
+            elif not technical_is_unlocked(active_username):
+                st.error("Technical Interview is locked. Complete the required Aptitude and DSA qualifications first.")
+            else:
+                try:
                     questions = get_gemini_questions(job_role, tech_stack, experience)
-                if not questions:
-                    st.error("Failed to generate questions. Please try again.")
+                except RuntimeError as exc:
+                    st.error(str(exc))
                 else:
                     interview_data = {
                         "username": username,
@@ -449,153 +484,98 @@ if "current_interview" not in st.session_state:
                         "stack": tech_stack,
                         "experience": experience,
                         "questions": questions,
-                        "responses": [],
-                        "mode": interview_mode,
-                        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M')
+                        "responses": []
                     }
                     st.session_state.current_interview = interview_data
                     st.session_state.interviews.append(interview_data)
                     st.session_state.show_form = False
                     st.session_state.question_index = 0
-                    # Enable proctoring and set student_id.
-                    if camera is not None and hasattr(camera, "video_transformer") and camera.video_transformer is not None:
-                        camera.video_transformer.proctoring_enabled = True
-                        camera.video_transformer.student_id = username
                     rerun_app()
 
-    # ---------------------------
-    # Previous Mock Interviews (when no active interview)
-    # ---------------------------
-    if st.session_state.interviews:
-        st.subheader("Previous Mock Interviews")
-        for i, interview in enumerate(st.session_state.interviews):
-            created = interview.get("created_at", "N/A")
-            with st.expander(
-                    f"{interview['role']} - {interview['experience']} Years (Created At: {created})"
-            ):
-                st.write(f"**Tech Stack:** {interview['stack']}")
-                st.write(f"**Mode:** {interview.get('mode', 'Text + Voice')}")
-                for response in interview.get("responses", []):
-                    st.write(f"**Q:** {response['question']}")
-                    st.write(f"**Your Answer:** {response['answer']}")
-                    st.write(f"**Feedback:** {response['feedback']}")
+# ---------------------------
+# Sidebar: Live Camera Feed (Proctoring)
+# ---------------------------
+if "current_interview" in st.session_state:
+    active_username = st.session_state.current_interview["username"]
+    interview_access = technical_is_unlocked(active_username)
+    if not interview_access:
+        st.error("Technical Interview is locked. Your qualification status must remain valid to continue.")
+        del st.session_state["current_interview"]
+        rerun_app()
+
+    with st.sidebar:
+        st.title("Live Camera Feed")
+        camera = webrtc_streamer(
+            key="camera",
+            video_transformer_factory=VideoTransformer,
+            rtc_configuration=RTC_CONFIGURATION,
+            async_processing=True,
+            media_stream_constraints={"video": True, "audio": False}
+        )
+        if camera and hasattr(camera, "video_transformer") and camera.video_transformer is not None:
+            camera.video_transformer.proctoring_enabled = True
+            camera.video_transformer.student_id = active_username
+            st.markdown(f"**No Face Warnings:** {camera.video_transformer.no_face_warning_count}")
+            st.markdown(f"**Multiple Face Warnings:** {camera.video_transformer.multiple_face_warning_count}")
+            st.markdown(f"**Eye-Gaze Warnings:** {camera.video_transformer.eye_gaze_warning_count}")
 
 # ---------------------------
 # Interview Process (when interview is active)
 # ---------------------------
-elif "current_interview" in st.session_state:
+if "current_interview" in st.session_state:
     if not (camera and hasattr(camera, "state") and getattr(camera.state, "playing", False)):
         st.warning("Please start your camera in the left sidebar before proceeding with the interview!")
     else:
         interview = st.session_state.current_interview
-        is_voice_only = interview.get("mode", "Text + Voice") == "Voice Only"
-
         st.subheader(f"Job Role: {interview['role']}")
         st.text(f"Tech Stack: {interview['stack']}")
         st.text(f"Years of Experience: {interview['experience']}")
-        st.text(f"Mode: {interview.get('mode', 'Text + Voice')}")
-
         index = st.session_state.question_index
-        total_questions = len(interview["questions"])
-
-        if index < total_questions:
+        if index < len(interview["questions"]):
             st.subheader(f"Question #{index + 1}")
             st.write(interview["questions"][index])
-
-            spoken_key = f"question_spoken_{index}"
-            if not st.session_state.get(spoken_key, False):
-                ai_ask_question(interview["questions"][index])
-                st.session_state[spoken_key] = True
-
-            recorded_key = f"recorded_answer_{index}"
+            speak_question(interview["questions"][index])
             answer_widget_key = f"answer_{index}"
-
+            recorded_key = f"recorded_answer_{index}"
             # Initialize recorded answer key if not present.
             if recorded_key not in st.session_state:
                 st.session_state[recorded_key] = ""
-
-            # ---------------------------
-            # Voice Only Mode
-            # ---------------------------
-            if is_voice_only:
-                if st.session_state[recorded_key]:
-                    st.success("Your recorded answer:")
-                    st.write(st.session_state[recorded_key])
-                else:
-                    st.info("No answer recorded yet. Click 'Record Answer' to speak.")
-
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    if st.button("🎤 Record Answer", key=f"record_{index}"):
-                        recorded_text = record_audio()
-                        st.session_state[recorded_key] = recorded_text
-                        rerun_app()
-                with col2:
-                    if st.button("🔄 Re-record", key=f"rerecord_{index}"):
-                        st.session_state[recorded_key] = ""
-                        rerun_app()
-                with col3:
-                    submit_disabled = not bool(st.session_state[recorded_key])
-                    if st.button("Next Question", key=f"next_{index}", disabled=submit_disabled):
-                        answer = st.session_state[recorded_key]
-                        with st.spinner("Evaluating your answer..."):
-                            feedback = process_answer(interview["questions"][index], answer)
+            # Use the recorded answer as the default value for the text area.
+            answer = st.text_area("Your Answer", key=answer_widget_key,
+                                  value=st.session_state.get(recorded_key, ""))
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Record Answer", key=f"record_{index}"):
+                    st.session_state[recorded_key] = record_audio()
+                    rerun_app()
+            with col2:
+                if st.button("Next Question", key=f"next_{index}"):
+                    answer = st.session_state.get(answer_widget_key, "")
+                    try:
+                        feedback = process_answer(interview["questions"][index], answer)
+                    except RuntimeError as exc:
+                        st.error(str(exc))
+                    else:
                         response_data = {
                             "username": interview["username"],
                             "question": interview["questions"][index],
                             "answer": answer,
-                            "feedback": feedback
+                            "feedback": feedback,
+                            "timestamp": datetime.now()
                         }
-                        try:
-                            feedback_collection.insert_one(response_data)
-                        except Exception as e:
-                            st.error(f"Error saving feedback: {e}")
+                        feedback_collection.insert_one(response_data)
                         interview["responses"].append(response_data)
                         st.session_state.question_index += 1
                         rerun_app()
-
-            # ---------------------------
-            # Text + Voice Mode
-            # ---------------------------
-            else:
-                # Use the recorded answer as the default value for the text area.
-                answer = st.text_area("Your Answer", key=answer_widget_key,
-                                      value=st.session_state.get(recorded_key, ""))
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("🎤 Record Answer", key=f"record_{index}"):
-                        recorded_text = record_audio()
-                        st.session_state[recorded_key] = recorded_text
-                        rerun_app()
-                with col2:
-                    if st.button("Next Question", key=f"next_{index}"):
-                        answer = st.session_state.get(answer_widget_key, "")
-                        if not answer.strip():
-                            st.warning("Please provide an answer before proceeding.")
-                        else:
-                            with st.spinner("Evaluating your answer..."):
-                                feedback = process_answer(interview["questions"][index], answer)
-                            response_data = {
-                                "username": interview["username"],
-                                "question": interview["questions"][index],
-                                "answer": answer,
-                                "feedback": feedback
-                            }
-                            try:
-                                feedback_collection.insert_one(response_data)
-                            except Exception as e:
-                                st.error(f"Error saving feedback: {e}")
-                            interview["responses"].append(response_data)
-                            st.session_state.question_index += 1
-                            rerun_app()
         else:
-            # ---------------------------
-            # Interview Completed
-            # ---------------------------
             # Disable proctoring once the final answer is submitted.
-            if camera is not None and hasattr(camera, "video_transformer") and camera.video_transformer is not None:
+            if camera is not None and hasattr(camera, "video_transformer"):
                 camera.video_transformer.proctoring_enabled = False
 
+            feedback_collection.update_many(
+                {"username": interview["username"], "completed": {"$ne": True}},
+                {"$set": {"completed": True, "interview_id": f"{interview['username']}-{datetime.now().strftime('%Y%m%d%H%M%S')}"}}
+            )
             st.success("Interview Completed!")
             st.markdown("## Interview Summary")
             for idx, response in enumerate(interview["responses"]):
@@ -604,7 +584,7 @@ elif "current_interview" in st.session_state:
                     st.markdown(f"**Feedback:** {response['feedback']}")
             if st.button("Close Interview"):
                 # Reset warning counters.
-                if camera is not None and hasattr(camera, "video_transformer") and camera.video_transformer is not None:
+                if camera is not None and hasattr(camera, "video_transformer"):
                     camera.video_transformer.no_face_warning_count = 0
                     camera.video_transformer.multiple_face_warning_count = 0
                     camera.video_transformer.eye_gaze_warning_count = 0
@@ -612,3 +592,18 @@ elif "current_interview" in st.session_state:
                 del st.session_state["current_interview"]
                 del st.session_state["question_index"]
                 rerun_app()
+
+# ---------------------------
+# Previous Mock Interviews (when no active interview)
+# ---------------------------
+if "current_interview" not in st.session_state and st.session_state.interviews:
+    st.subheader("Previous Mock Interviews")
+    for i, interview in enumerate(st.session_state.interviews):
+        with st.expander(
+                f"{interview['role']} - {interview['experience']} Years (Created At: {datetime.now().strftime('%Y-%m-%d')})"
+        ):
+            st.write(f"Tech Stack: {interview['stack']}")
+            for response in interview["responses"]:
+                st.write(f"**Q:** {response['question']}")
+                st.write(f"**Your Answer:** {response['answer']}")
+                st.write(f"**Feedback:** {response['feedback']}")

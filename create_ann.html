@@ -72,6 +72,25 @@
             font-size: 16px;
             margin-top: 10px;
         }
+
+        .job-fields {
+            display: none;
+            padding: 16px;
+            margin: 12px 0;
+            border: 1px solid #dfe6ee;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+
+        .job-fields input,
+        .job-fields textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -89,6 +108,58 @@
             <label for="content">Content:</label>
             <textarea id="content" required></textarea><br>
 
+            <label for="announcementType">Announcement Type:</label>
+            <select id="announcementType">
+                <option value="general">General Announcement</option>
+                <option value="job">Job / Placement Opportunity</option>
+            </select>
+
+            <div id="jobFields" class="job-fields">
+                <label for="companyName">Company Name:</label>
+                <input id="companyName" type="text">
+                <label for="jobTitle">Job Title / Role:</label>
+                <input id="jobTitle" type="text">
+                <label for="employmentType">Employment Type:</label>
+                <input id="employmentType" type="text" placeholder="Full-time, Internship, etc.">
+                <label for="location">Location:</label>
+                <input id="location" type="text">
+                <label for="salaryPackage">Salary / Package:</label>
+                <input id="salaryPackage" type="text">
+                <label for="eligibleCourse">Eligible Course:</label>
+                <input id="eligibleCourse" type="text" placeholder="Optional">
+                <label for="eligibleBranch">Eligible Branch / Department:</label>
+                <input id="eligibleBranch" type="text" placeholder="Optional">
+                <label for="eligibleYear">Eligible Graduation Year:</label>
+                <input id="eligibleYear" type="number" placeholder="Optional">
+                <label for="minimumCgpa">Minimum CGPA:</label>
+                <input id="minimumCgpa" type="number" min="0" max="10" step="0.01" placeholder="Optional">
+                <label for="minimumPercentage">Minimum Percentage:</label>
+                <input id="minimumPercentage" type="number" min="0" max="100" step="0.01" placeholder="Optional">
+                <label for="requiredSkills">Required Skills:</label>
+                <input id="requiredSkills" type="text" placeholder="Comma-separated, optional">
+                <label for="applicationStartDate">Application Start Date:</label>
+                <input id="applicationStartDate" type="datetime-local">
+                <label for="applicationDeadline">Application Deadline:</label>
+                <input id="applicationDeadline" type="datetime-local">
+                <label for="interviewTestDate">Interview / Test Date:</label>
+                <input id="interviewTestDate" type="datetime-local">
+                <label for="numberOfOpenings">Number of Openings:</label>
+                <input id="numberOfOpenings" type="number" min="1" placeholder="Optional">
+                <label for="additionalInstructions">Additional Instructions:</label>
+                <textarea id="additionalInstructions"></textarea>
+            </div>
+
+            <label for="targetAudience">Recipients:</label>
+            <select id="targetAudience">
+                <option value="all">All students</option>
+                <option value="departments">Departments</option>
+                <option value="graduationYears">Graduation years</option>
+                <option value="students">Specific usernames</option>
+            </select>
+            <input type="text" id="targetValues" placeholder="Comma-separated values (optional)">
+            <label><input type="checkbox" id="emailChannel"> Send configured email</label>
+            <label><input type="checkbox" id="smsChannel"> Send configured SMS</label><br>
+
             <button type="submit">Submit</button>
         </form>
     </div>
@@ -99,11 +170,38 @@
 
             const title = document.getElementById("title").value;
             const content = document.getElementById("content").value;
+            const type = document.getElementById("announcementType").value;
+            const targetAudience = document.getElementById("targetAudience").value;
+            const values = document.getElementById("targetValues").value.split(',').map(value => value.trim()).filter(Boolean);
+            const token = localStorage.getItem('careerconnectToken');
+            const payload = {
+                title, content, type, targetAudience,
+                targetDepartments: targetAudience === 'departments' ? values : [],
+                targetGraduationYears: targetAudience === 'graduationYears' ? values.map(Number).filter(Number.isFinite) : [],
+                targetStudents: targetAudience === 'students' ? values : [],
+                channels: ['in-app'].concat(document.getElementById('emailChannel').checked ? ['email'] : [], document.getElementById('smsChannel').checked ? ['sms'] : []),
+                companyName: document.getElementById('companyName').value,
+                jobTitle: document.getElementById('jobTitle').value,
+                employmentType: document.getElementById('employmentType').value,
+                location: document.getElementById('location').value,
+                salaryPackage: document.getElementById('salaryPackage').value,
+                eligibleCourse: document.getElementById('eligibleCourse').value,
+                eligibleBranch: document.getElementById('eligibleBranch').value,
+                eligibleYear: Number(document.getElementById('eligibleYear').value) || undefined,
+                minimumCgpa: Number(document.getElementById('minimumCgpa').value) || undefined,
+                minimumPercentage: Number(document.getElementById('minimumPercentage').value) || undefined,
+                requiredSkills: document.getElementById('requiredSkills').value.split(',').map(value => value.trim()).filter(Boolean),
+                applicationStartDate: document.getElementById('applicationStartDate').value || undefined,
+                applicationDeadline: document.getElementById('applicationDeadline').value || undefined,
+                interviewTestDate: document.getElementById('interviewTestDate').value || undefined,
+                numberOfOpenings: Number(document.getElementById('numberOfOpenings').value) || undefined,
+                additionalInstructions: document.getElementById('additionalInstructions').value
+            };
 
             const response = await fetch("http://localhost:3000/announcements", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, content }),
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify(payload),
             });
 
             if (response.ok) {
@@ -112,6 +210,10 @@
             } else {
                 alert("Error creating announcement.");
             }
+        });
+
+        document.getElementById('announcementType').addEventListener('change', (event) => {
+            document.getElementById('jobFields').style.display = event.target.value === 'job' ? 'block' : 'none';
         });
     </script>
 </body>

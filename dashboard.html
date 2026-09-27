@@ -123,12 +123,21 @@
     document.addEventListener('DOMContentLoaded', function () {
       const content = document.getElementById('content');
 
-      // Fetch user data from localStorage
-      const user = JSON.parse(localStorage.getItem('user'));
-
-      // If user data exists, display the full name in the dashboard
-      if (user) {
-        document.getElementById('fullName').textContent = user.name;
+      let user = null;
+      const token = localStorage.getItem('careerconnectToken');
+      if (token) {
+        fetch('/api/student/me', {
+          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+          cache: 'no-store'
+        })
+          .then(response => response.ok ? response.json() : Promise.reject(new Error('Unable to load student account')))
+          .then(data => {
+            user = data.user;
+            localStorage.setItem('username', user.username);
+            localStorage.setItem('fullName', user.username);
+            document.getElementById('fullName').textContent = user.username;
+          })
+          .catch(error => console.error('Unable to load authenticated student:', error));
       }
 
       // Dashboard button
@@ -151,17 +160,17 @@
           <button id="dashboardButton" class="btn">Result Analysis & Visualization</button>
         `;
         document.getElementById('quizButton').addEventListener('click', function () {
-          window.location.href = 'http://localhost:8501';
+          window.location.href = '/aptitude/';
         });
         document.getElementById('dashboardButton').addEventListener('click', function () {
-          window.location.href = 'http://localhost:8502';
+          window.location.href = '/aptitude-dashboard/';
         });
       });
 
       // Mock-Interview button
       document.getElementById('Mockinterview').addEventListener('click', function (event) {
         event.preventDefault();
-        content.innerHTML = '<h2>Mock-Interview</h2><p>Mock interviews will be displayed here.</p>';
+        window.location.href = '/mockinterview/';
       });
 
      
@@ -172,7 +181,7 @@
         content.innerHTML = `
           <h2>Resume Scanner</h2>
           <p>Check if your resume is job-ready.</p>
-          <a href="http://localhost:8505" class="btn">Start ATS Scan</a>
+          <a href="/resumeats/" class="btn">Start ATS Scan</a>
         `;
       });
 
@@ -231,12 +240,10 @@
           <button id="dsaAnalysisButton" class="btn">DSA Analysis</button>
         `;
         document.getElementById('dsaQuestionsButton').addEventListener('click', function () {
-          // Redirect to the DSA Questions app running on port 8503
-          window.location.href = 'http://localhost:8503';
+          window.location.href = '/dsa/';
         });
         document.getElementById('dsaAnalysisButton').addEventListener('click', function () {
-          // Redirect to the DSA Analysis app running on port 8504
-          window.location.href = 'http://localhost:8504';
+          window.location.href = '/dsa-dashboard/';
         });
       });
     });

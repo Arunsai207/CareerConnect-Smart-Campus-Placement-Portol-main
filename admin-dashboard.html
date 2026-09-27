@@ -102,16 +102,19 @@
         .student-list ul {
             list-style: none;
             padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
         }
 
         .student-list li {
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
             background-color: #f9f9f9;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 10px;
+            min-height: 190px;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -132,6 +135,40 @@
         .action-buttons {
             display: flex;
             gap: 10px;
+            margin-top: 12px;
+        }
+
+        .student-avatar {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            margin-bottom: 10px;
+            border-radius: 50%;
+            background: #2c3e50;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .student-status {
+            margin-top: 8px;
+            color: #166534;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .dashboard-search {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .dashboard-search input,
+        .dashboard-search select {
+            padding: 10px;
+            border: 1px solid #d5dce5;
+            border-radius: 6px;
         }
 
         .action-buttons button {
@@ -254,7 +291,7 @@
         <a href="adminprofile.html">Admin Profile</a>
         <li><a href="admin-announce.html" id="announcements">Announcements</a></li>
         <li><a href="admin-login.html" id="logout">Logout</a></li>
-        <footer>&copy; 2024 CareerConnect</footer>
+        <footer>&copy;CareerConnect</footer>
     </div>
 
     <!-- Main Content -->
@@ -270,7 +307,19 @@
         <!-- Student List Section -->
         <div class="card student-list">
             <h2>Student Details</h2>
+            <div class="dashboard-search">
+                <input id="studentSearch" type="search" placeholder="Search student">
+                <input id="studentCourse" type="search" placeholder="Course">
+                <input id="studentYear" type="number" placeholder="Graduation year">
+                <button type="button" onclick="fetchStudents()">Search</button>
+            </div>
             <ul id="students-container"></ul>
+            <div id="studentPagination" style="margin-top:18px;text-align:center;"></div>
+        </div>
+
+        <div class="card">
+            <h2>Job Applications</h2>
+            <div id="applications-container">Loading applications...</div>
         </div>
     </div>
 
@@ -304,7 +353,10 @@
         // Function to fetch and display admin profile
         async function fetchAdminProfile() {
             try {
-                const response = await fetch('http://localhost:3000/admin/profile');
+                const token = localStorage.getItem('careerconnectToken');
+                const response = await fetch('/admin/profile', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 const data = await response.json();
                 
             
@@ -330,23 +382,37 @@
         }
 
         // Function to fetch and display students
-        async function fetchStudents() {
+        let studentPage = 1;
+        async function fetchStudents(page = studentPage) {
             try {
-                const response = await fetch('http://localhost:3000/students');
+                studentPage = page;
+                const token = localStorage.getItem('careerconnectToken');
+                const params = new URLSearchParams({
+                    page,
+                    limit: 12,
+                    search: document.getElementById('studentSearch').value,
+                    course: document.getElementById('studentCourse').value,
+                    graduationYear: document.getElementById('studentYear').value
+                });
+                const response = await fetch(`/api/admin/students?${params}`, { headers: { Authorization: `Bearer ${token}` } });
                 const data = await response.json();
 
                 if (response.ok) {
                     const studentsContainer = document.getElementById('students-container');
                     studentsContainer.innerHTML = ''; // Clear existing content
                     
-                    data.forEach(student => {
+                    data.students.forEach(student => {
                         const li = document.createElement('li');
+                        const initial = String(student.name || student.username || 'S').charAt(0).toUpperCase();
                         li.innerHTML = `
                             <div>
+                                <div class="student-avatar">${initial}</div>
                                 <strong>${student.name}</strong>
                                 <p>Email: ${student.email}</p>
-                                <p>Phone: ${student.phone}</p>
-                                <p>Department:${student.department}</p>
+                                <p>Phone: ${student.phone || 'Not available'}</p>
+                                <p>${student.course || 'Course not set'} · ${student.department || 'Branch not set'}</p>
+                                <p>Graduation year: ${student.graduationYear || 'Not available'}</p>
+                                <div class="student-status">${student.emailVerified ? '✓ Email verified' : 'Email not verified'}</div>
                             </div>
                             <div class="action-buttons">
                                 <button class="edit-btn" onclick="editStudent('${student.username}', '${student.name}', '${student.email}', '${student.phone}','${student.department}')">Edit</button>
@@ -355,12 +421,34 @@
                         `;
                         studentsContainer.appendChild(li);
                     });
+                    const pagination = document.getElementById('studentPagination');
+                    pagination.innerHTML = data.pages > 1
+                        ? `<button ${data.page <= 1 ? 'disabled' : ''} onclick="fetchStudents(${data.page - 1})">Previous</button> <span>Page ${data.page} of ${data.pages}</span> <button ${data.page >= data.pages ? 'disabled' : ''} onclick="fetchStudents(${data.page + 1})">Next</button>`
+                        : '';
                 } else {
                     alert('Error fetching student details');
                 }
             } catch (error) {
                 console.error('Error:', error);
             }
+        }
+
+        async function fetchApplications() {
+            const token = localStorage.getItem('careerconnectToken');
+            const response = await fetch('/api/admin/applications', { headers: { Authorization: `Bearer ${token}` } });
+            const data = await response.json();
+            if (!response.ok) return;
+            const esc = (value) => String(value || '').replace(/[&<>"']/g, character => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[character]));
+            document.getElementById('applications-container').innerHTML = (data.applications || []).map((application) => {
+                const job = application.announcementId || {};
+                return `<div style="padding:12px 0;border-bottom:1px solid #e5e7eb"><strong>${esc(application.student?.name || application.studentId)}</strong> — ${esc(application.role)} at ${esc(application.companyName)}<br><small>Applied: ${new Date(application.appliedAt).toLocaleString()}</small><br><select onchange="updateApplicationStatus('${application._id}', this.value)"><option ${application.status === 'APPLIED' ? 'selected' : ''}>APPLIED</option><option ${application.status === 'SHORTLISTED' ? 'selected' : ''}>SHORTLISTED</option><option ${application.status === 'SELECTED' ? 'selected' : ''}>SELECTED</option><option ${application.status === 'REJECTED' ? 'selected' : ''}>REJECTED</option><option ${application.status === 'WITHDRAWN' ? 'selected' : ''}>WITHDRAWN</option></select></div>`;
+            }).join('') || '<p>No job applications yet.</p>';
+        }
+
+        async function updateApplicationStatus(id, status) {
+            const token = localStorage.getItem('careerconnectToken');
+            await fetch(`/api/admin/applications/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status }) });
+            fetchApplications();
         }
 
         // Function to open edit modal
@@ -430,6 +518,7 @@
         fetchAdminProfile();
         fetchStudentCount();
         fetchStudents();
+        fetchApplications();
         function closeModal() {
             document.getElementById('editModal').style.display = 'none';
         }
@@ -438,8 +527,7 @@
             window.location.href = "admin-login.html";
         });
         document.getElementById('announcements').addEventListener('click', function () {
-            localStorage.clear();  // Clear stored data on logout
-            window.location.href = "Announcement.html";
+            window.location.href = "admin-announce.html";
         });
     </script>
 </body>

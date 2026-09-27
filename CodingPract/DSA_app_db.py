@@ -3,7 +3,7 @@ import os
 import re
 import subprocess
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 import streamlit as st
@@ -21,6 +21,8 @@ try:
     collection = db['submissions']
 except Exception:
     client, db, collection = None, None, None
+
+DSA_MAX_DURATION_SECONDS = 5 * 60
 
 # ==========================================
 # Application Setup & Data Loading
@@ -517,10 +519,12 @@ __run_test()
                 pass
 
 
-def store_submission_data(username, qid, difficulty, cleaned_topics, code_lang, time_taken):
+def store_submission_data(username, qid, difficulty, cleaned_topics, code_lang, time_taken, code,
+                          passed_test_cases, total_test_cases):
     """Store submission details in MongoDB."""
     if collection is None:
         return
+    previous_attempts = collection.count_documents({"username": username, "qid": int(qid)}) if collection is not None else 0
     submission_data = {
         "username": username,
         "qid": int(qid),
@@ -528,7 +532,12 @@ def store_submission_data(username, qid, difficulty, cleaned_topics, code_lang, 
         "topics": cleaned_topics,
         "coding_lang": code_lang,
         "time_taken": time_taken,
-        "status": "submitted",
+        "status": "accepted" if passed_test_cases == total_test_cases else "rejected",
+        "passed_test_cases": passed_test_cases,
+        "total_test_cases": total_test_cases,
+        "coding_score": round((passed_test_cases / total_test_cases) * 100, 2) if total_test_cases else 0,
+        "submitted_code": code,
+        "attempt_number": previous_attempts + 1,
         "timestamp": datetime.now()
     }
     try:
@@ -554,13 +563,158 @@ if selected_qid is not None:
 
 st.header("🧩 DSA Practice Platform")
 
-username = st.text_input("Enter your username")
+username = st.text_input("Enter your username", autocomplete="username")
+
+def dsa_is_unlocked(student_id):
+    """Prevent direct DSA access before the central placement workflow unlocks it."""
+    try:
+        client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
+        student_db = client['studentDB']
+        progress = student_db['placementprogresses'].find_one({"studentId": student_id}, {"aptitude.status": 1})
+        if progress and progress.get("aptitude", {}).get("status") == "QUALIFIED":
+            return True
+        latest = client['quiz_system']['apti_test'].find_one({"student_id": student_id}, sort=[("timestamp", -1)])
+        config = student_db['assessmentconfigs'].find_one({"key": "default"}) or {"aptitudeMinScore": 50}
+        if latest and int(latest.get("no_of_questions", 0)) > 0:
+            qualified = (float(latest.get("marks_achieved", 0)) / float(latest["no_of_questions"]) * 100) >= float(config.get("aptitudeMinScore", 60))
+            if qualified:
+                student_db['placementprogresses'].update_one(
+                    {"studentId": student_id},
+                    {"$set": {"studentId": student_id, "aptitude.status": "QUALIFIED", "dsa.status": "AVAILABLE"}},
+                    upsert=True
+                )
+            return qualified
+        return False
+    except Exception:
+        return False
+
+
+def start_dsa_session(student_id):
+    """Create one persisted DSA session and resume it without resetting the deadline."""
+    client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
+    progress = client['studentDB']['placementprogresses']
+    current = progress.find_one({"studentId": student_id}, {"dsa": 1})
+    dsa = (current or {}).get("dsa", {})
+    if dsa.get("submitted") is True:
+        return current
+    if not dsa.get("startedAt"):
+        started_at = datetime.utcnow()
+        progress.update_one(
+            {"studentId": student_id},
+            {"$setOnInsert": {"studentId": student_id},
+             "$set": {
+                 "dsa.startedAt": started_at,
+                 "dsa.deadline": started_at + timedelta(seconds=DSA_MAX_DURATION_SECONDS),
+                 "dsa.completed": False,
+                 "dsa.submitted": False,
+                 "dsa.durationQualified": False
+             }},
+            upsert=True
+        )
+    elif not dsa.get("deadline"):
+        progress.update_one(
+            {"studentId": student_id},
+            {"$set": {"dsa.deadline": dsa["startedAt"] + timedelta(seconds=DSA_MAX_DURATION_SECONDS)}}
+        )
+    session = progress.find_one({"studentId": student_id}, {"dsa": 1})
+    if session and session.get("dsa", {}).get("deadline") <= datetime.utcnow():
+        return finalize_dsa_session(student_id, "automatic")
+    return session
+
+
+def finalize_dsa_session(student_id, submission_type):
+    """Finalize once using the persisted server deadline; repeated calls are idempotent."""
+    client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
+    progress = client['studentDB']['placementprogresses']
+    session = progress.find_one({"studentId": student_id}, {"dsa": 1})
+    dsa = (session or {}).get("dsa", {})
+    if not dsa.get("startedAt"):
+        raise ValueError("DSA attempt has not started.")
+    if dsa.get("submitted") is True:
+        return session
+    now = datetime.utcnow()
+    deadline = dsa.get("deadline") or (dsa["startedAt"] + timedelta(seconds=DSA_MAX_DURATION_SECONDS))
+    elapsed_seconds = max(0, int((now - dsa["startedAt"]).total_seconds()))
+    if elapsed_seconds < DSA_MAX_DURATION_SECONDS:
+        raise ValueError("DSA round requires a minimum of 5 minutes. Please continue until the timer reaches 00:00.")
+    submitted_at = now
+    duration_seconds = elapsed_seconds
+    progress.update_one(
+        {"studentId": student_id, "dsa.submitted": {"$ne": True}},
+        {"$set": {
+            "dsa.deadline": deadline,
+            "dsa.completedAt": submitted_at,
+            "dsa.submittedAt": submitted_at,
+            "dsa.durationSeconds": duration_seconds,
+            "dsa.completed": True,
+            "dsa.submitted": True,
+            "dsa.submissionType": submission_type,
+            "dsa.durationQualified": True
+        }}
+    )
+    return progress.find_one({"studentId": student_id}, {"dsa": 1})
 
 if 'username' not in st.session_state:
     st.session_state['username'] = username
 
 if username:
+    if not dsa_is_unlocked(username):
+        st.error("DSA Practice is locked. Qualify in the Aptitude Round first.")
+        st.stop()
+    try:
+        dsa_session = start_dsa_session(username)
+    except Exception as error:
+        st.error(f"Unable to start the server-tracked DSA session: {error}")
+        st.stop()
+    dsa = (dsa_session or {}).get("dsa", {})
+    dsa_submitted = dsa.get("submitted") is True
+    dsa_deadline = dsa.get("deadline")
+    remaining_seconds = max(0, int((dsa_deadline - datetime.utcnow()).total_seconds())) if dsa_deadline else 0
+    if dsa_submitted:
+        st.success(f"DSA assessment finalized ({dsa.get('submissionType', 'manual')}). Further submissions are disabled.")
+    else:
+        st.info(f"Time Remaining: {remaining_seconds // 60:02}:{remaining_seconds % 60:02}")
     st.session_state['submissions'] = fetch_user_submissions(username)
+
+    if dsa_deadline and not dsa_submitted:
+        def render_dsa_timer():
+            """Poll the persisted deadline so expiry finalizes without user interaction."""
+            current_session = start_dsa_session(username)
+            current_dsa = (current_session or {}).get("dsa", {})
+            current_deadline = current_dsa.get("deadline")
+            if current_dsa.get("submitted") is True:
+                st.rerun()
+
+            if current_deadline:
+                remaining = max(0, int((current_deadline - datetime.utcnow()).total_seconds()))
+                if remaining == 0:
+                    finalize_dsa_session(username, "automatic")
+                    st.rerun()
+
+                mins, secs = divmod(remaining, 60)
+                st.markdown(
+                    f"""
+                    <div style="font-family: sans-serif; background: #181825; color: #a6e3a1;
+                        padding: 14px; border-radius: 10px; text-align: center;
+                        border: 1px solid #313244; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div style="font-size: 11px; font-weight: 600; color: #cdd6f4;
+                            letter-spacing: 1px; margin-bottom: 6px;">TIME REMAINING</div>
+                        <div style="font-size: 26px; font-weight: bold;
+                            font-family: 'Courier New', Courier, monospace;">{mins:02}:{secs:02}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+        fragment = getattr(st, "fragment", None)
+        if fragment is not None:
+            @fragment(run_every="1s")
+            def timer_fragment():
+                render_dsa_timer()
+
+            timer_fragment()
+        else:
+            render_dsa_timer()
 
     # --------------------------------------
     # Detailed Question Solving View
@@ -581,32 +735,6 @@ if username:
             body_val = question_data.iloc[0].get('Body', '')
             description = clean_html(str(body_val))
             test_cases = extract_test_cases(description)
-
-            # Sidebar Live Real-Time Ticking Stopwatch
-            if 'start_time' in st.session_state:
-                start_timestamp_ms = int(st.session_state['start_time'].timestamp() * 1000)
-                timer_html = f"""
-                <div style="font-family: sans-serif; background: #181825; color: #a6e3a1; padding: 14px; border-radius: 10px; text-align: center; border: 1px solid #313244; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <div style="font-size: 11px; font-weight: 600; color: #cdd6f4; letter-spacing: 1px; margin-bottom: 6px;">⏱️ TIME ELAPSED</div>
-                    <div id="stopwatch" style="font-size: 26px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #a6e3a1;">00:00:00</div>
-                </div>
-                <script>
-                    const startTime = {start_timestamp_ms};
-                    function updateTimer() {{
-                        const now = new Date().getTime();
-                        const diff = Math.floor((now - startTime) / 1000);
-                        if (diff >= 0) {{
-                            const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
-                            const mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                            const secs = String(Math.floor(diff % 60)).padStart(2, '0');
-                            document.getElementById('stopwatch').innerText = `${{hrs}}:${{mins}}:${{secs}}`;
-                        }}
-                    }}
-                    setInterval(updateTimer, 1000);
-                    updateTimer();
-                </script>
-                """
-                components.html(timer_html, height=95)
 
             col1, col2 = st.columns([1, 1])
             with col1:
@@ -637,22 +765,32 @@ if username:
                 function_structure = get_language_structure(language)
 
                 ace_mode = "c_cpp" if language in ["C", "C++"] else language.lower()
+                editor_state_key = f"code_{selected_qid}_{language}"
+                if editor_state_key not in st.session_state:
+                    st.session_state[editor_state_key] = function_structure
 
                 code = st_ace(
                     language=ace_mode,
                     theme='monokai',
                     height=350,
-                    value=function_structure,
-                    key=f"editor_{selected_qid}_{language}"
+                    value=st.session_state[editor_state_key],
+                    key=f"editor_{selected_qid}_{language}",
+                    readonly=dsa_submitted,
+                    auto_update=not dsa_submitted
                 )
+                if code is not None:
+                    st.session_state[editor_state_key] = code
 
                 if 'test_case_results' not in st.session_state:
                     st.session_state['test_case_results'] = {}
 
                 st.write("---")
-                run_all_button = st.button("▶ Run All Test Cases", type="primary", use_container_width=True)
+                run_all_button = st.button("▶ Run All Test Cases", type="primary", use_container_width=True, disabled=dsa_submitted)
 
                 if run_all_button:
+                    if start_dsa_session(username).get("dsa", {}).get("submitted") is True:
+                        st.error("The DSA assessment has expired or was already submitted.")
+                        st.stop()
                     st.session_state['test_case_results'] = {}
                     all_passed = True
                     with st.spinner("Executing solution on test cases..."):
@@ -677,10 +815,32 @@ if username:
                         topics = question_data.iloc[0].get('topics', [])
                         cleaned_topics = topics if isinstance(topics, list) else []
 
-                        store_submission_data(username, selected_qid, difficulty, cleaned_topics, language, formatted_time_taken)
+                        store_submission_data(
+                            username, selected_qid, difficulty, cleaned_topics, language, formatted_time_taken,
+                            code, sum(1 for result in st.session_state['test_case_results'].values() if result['passed']),
+                            len(test_cases)
+                        )
                         st.balloons()
                     elif test_cases:
                         st.error("Some test cases failed. Check details below.")
+                        failed_end_time = datetime.now()
+                        failed_time = format_time((failed_end_time - st.session_state['start_time']).total_seconds())
+                        difficulty = question_data.iloc[0].get('difficulty', 'Unknown')
+                        topics = question_data.iloc[0].get('topics', [])
+                        cleaned_topics = topics if isinstance(topics, list) else []
+                        store_submission_data(
+                            username, selected_qid, difficulty, cleaned_topics, language, failed_time,
+                            code, sum(1 for result in st.session_state['test_case_results'].values() if result['passed']),
+                            len(test_cases)
+                        )
+
+                st.write("---")
+                if st.button("Complete DSA Round", type="secondary", use_container_width=True, disabled=dsa_submitted):
+                    try:
+                        finalize_dsa_session(username, "manual")
+                        st.success("DSA round submitted. Eligibility will be recalculated from the server records.")
+                    except Exception as error:
+                        st.error(f"Unable to complete the DSA round: {error}")
 
                 # Render Tabbed Test Case Output
                 if test_cases:
@@ -701,7 +861,10 @@ if username:
                                 else:
                                     st.error(f"Test Case {idx + 1} Failed ❌")
 
-                            if st.button(f"Run Test Case {idx + 1} Only", key=f"single_run_{idx}"):
+                            if st.button(f"Run Test Case {idx + 1} Only", key=f"single_run_{idx}", disabled=dsa_submitted):
+                                if start_dsa_session(username).get("dsa", {}).get("submitted") is True:
+                                    st.error("The DSA assessment has expired or was already submitted.")
+                                    st.stop()
                                 with st.spinner(f"Executing Test Case {idx + 1}..."):
                                     single_out = execute_code(language, code, tc)
                                     is_pass = normalize_output(single_out) == normalize_output(tc['output'])
@@ -785,7 +948,7 @@ if username:
                     with col7:
                         st.write(submission_info["time_taken"])
                     with col8:
-                        next_url = f"http://localhost:8503/?qid={qid}"
+                        next_url = f"/dsa/?qid={qid}"
                         st.markdown(f"[Solve (QID {qid})]({next_url})")
         else:
             st.info("No questions database (`question_details.csv`) loaded yet.")

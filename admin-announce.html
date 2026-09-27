@@ -157,7 +157,7 @@
         <a href="adminprofile.html">Admin Profile</a>
         <a href="admin-announce.html" id="announcements">Announcements</a>
         <a href="admin-login.html" id="logout">Logout</a>
-        <footer>&copy; 2024 CareerConnect</footer>
+        <footer>&copy;CareerConnect</footer>
     </div>
 
     <div class="main-content">
@@ -182,6 +182,16 @@
                 ➕ Create Announcement
             </button>
         </a>
+        <section style="margin-top:24px;text-align:left;border-top:1px solid #ddd;padding-top:20px;">
+            <h2>Schedule a reminder</h2>
+            <form id="reminderForm">
+                <input id="reminderTitle" placeholder="Reminder title" required style="padding:10px;width:28%;">
+                <input id="reminderDueAt" type="datetime-local" required style="padding:10px;">
+                <input id="reminderContent" placeholder="Reminder message" required style="padding:10px;width:35%;">
+                <button type="submit" style="padding:10px;background:#4CAF50;color:white;border:0;border-radius:4px;">Schedule</button>
+            </form>
+            <div id="reminders" style="margin-top:12px;"></div>
+        </section>
     </div>
 
     <script>
@@ -211,6 +221,26 @@
                     }).join('');
                     announcementSection.innerHTML = announcementContent;
                 }
+
+                async function fetchReminders() {
+                    const token = localStorage.getItem('careerconnectToken');
+                    if (!token) return;
+                    const response = await fetch('/api/reminders', { headers: { Authorization: `Bearer ${token}` } });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    document.getElementById('reminders').innerHTML = (data.reminders || []).map(reminder =>
+                        `<div style="padding:8px 0;">${reminder.title} — ${new Date(reminder.dueAt).toLocaleString()} ${reminder.sentAt ? '(sent)' : '(pending)'}</div>`).join('') || '<p>No reminders scheduled.</p>';
+                }
+
+                document.getElementById('reminderForm').addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const token = localStorage.getItem('careerconnectToken');
+                    const response = await fetch('/api/reminders', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ title: reminderTitle.value, content: reminderContent.value, dueAt: reminderDueAt.value, channels: ['in-app'] })
+                    });
+                    if (response.ok) { event.target.reset(); fetchReminders(); } else alert((await response.json()).error || 'Unable to schedule reminder.');
+                });
             } catch (error) {
                 console.error('Error fetching announcements:', error);
             }
@@ -223,7 +253,8 @@
             if (confirmation) {
                 try {
                     const response = await fetch(`http://localhost:3000/announcements/${id}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${localStorage.getItem('careerconnectToken')}` }
                     });
 
                     const data = await response.json();
@@ -241,7 +272,7 @@
         }
 
         // Call the function on page load
-        window.onload = fetchAnnouncements;
+        window.onload = () => { fetchAnnouncements(); fetchReminders(); };
     </script>
 </body>
 </html>

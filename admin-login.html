@@ -96,14 +96,20 @@
         <form id="admin-form">
             <!-- Registration fields (hidden by default) -->
             <div class="register-fields">
+                <label for="name">Name</label>
                 <input type="text" id="name" placeholder="Name">
+                <label for="position">Position</label>
                 <input type="text" id="position" placeholder="Position">
+                <label for="email">Email</label>
                 <input type="email" id="email" placeholder="Email">
+                <label for="phone">Phone Number</label>
                 <input type="tel" id="phone" placeholder="Phone Number">
             </div>
 
             <!-- Login and Register shared fields -->
+            <label for="username">Username</label>
             <input type="text" id="username" placeholder="Username" required>
+            <label for="password">Password</label>
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
@@ -164,6 +170,8 @@
             const errorMessage = document.getElementById('error-message');
 
             if (response.ok) {
+                if (data.token) localStorage.setItem('careerconnectToken', data.token);
+                if (data.admin) localStorage.setItem('adminData', JSON.stringify(data.admin));
                 alert(data.message);
                 if (isLogin) {
                     window.location.href = './addashboard.html'; // Redirect to dashboard on successful login

@@ -4,19 +4,23 @@ import os
 import base64
 from openpyxl import load_workbook
 from PIL import Image as PILImage
+from typing import Any, cast
 import io
-import time  # For time tracking
+import time  
 import pymongo
 from pymongo import MongoClient
 from datetime import datetime
 import cv2  # For face and eye detection
 
-# Import for live camera feed
+
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
 
-# ====================================
-# Initialize Session State
-# ====================================
+
+def get_opencv_haarcascade(filename: str) -> str:
+    cv2_data = getattr(cv2, "data", None)
+    haarcascade_root = getattr(cv2_data, "haarcascades", os.path.join(os.path.dirname(cv2.__file__), "data", "haarcascades"))
+    return os.path.join(haarcascade_root, filename)
+
 
 session_defaults = {
     "started": False,
@@ -36,46 +40,29 @@ session_defaults = {
 for key, value in session_defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
-# ---------------------------
-# Video Transformer with Proctoring Enhancements and Smoothing (including eye-gaze tracking)
-# ---------------------------
+
+
 class VideoTransformer(VideoTransformerBase):
     def __init__(self):
-        # Load Haar Cascade for face detection.
-        self.face_cascade = cv2.CascadeClassifier(
-            cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-        )
-        # Load Haar Cascade for eye detection.
-        self.eye_cascade = cv2.CascadeClassifier(
-            cv2.data.haarcascades + "haarcascade_eye.xml"
-        )
-        # Warning counters and timers.
+        self.face_cascade = cv2.CascadeClassifier(get_opencv_haarcascade("haarcascade_frontalface_default.xml"))
+        self.eye_cascade = cv2.CascadeClassifier(get_opencv_haarcascade("haarcascade_eye.xml"))
         self.no_face_warning_count = 0
         self.multiple_face_warning_count = 0
-        self.eye_gaze_warning_count = 0  # New counter for eye gaze violations.
+        self.eye_gaze_warning_count = 0
         self.last_no_face_warning_time = time.time()
         self.last_multiple_warning_time = time.time()
         self.last_eye_gaze_warning_time = time.time()
         self.test_terminated = False
-
-        # Smoothing parameters: count consecutive frames.
         self.no_face_frames = 0
         self.multiple_face_frames = 0
-        self.eye_gaze_frames = 0  # New counter for consecutive eye gaze violations.
-        self.frame_threshold = 5  # Only trigger warning after 5 consecutive frames.
-
-        # Timing thresholds.
-        self.warning_interval = 2  # seconds between warnings.
-        self.warning_limit = 10  # number of warnings before termination.
-
-        # New attribute to control proctoring activation.
+        self.eye_gaze_frames = 0
+        self.frame_threshold = 5
+        self.warning_interval = 2
+        self.warning_limit = 10
         self.proctoring_enabled = False
-
-        # NEW: Student id attribute to log violations for a particular student.
         self.student_id = None
 
     def transform(self, frame):
-        # Only run proctoring if enabled.
         if not self.proctoring_enabled:
             return frame.to_ndarray(format="bgr24")
 
@@ -84,12 +71,8 @@ class VideoTransformer(VideoTransformerBase):
         current_time = time.time()
         violation_message = None
 
-        # ---------------------------
-        # Face Detection
-        # ---------------------------
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
 
-        # Check for "no face" condition.
         if len(faces) == 0:
             self.no_face_frames += 1
         else:
@@ -103,7 +86,6 @@ class VideoTransformer(VideoTransformerBase):
                     store_face_log(self.student_id, "No Face Detected!")
             violation_message = "No Face Detected!"
 
-        # Check for "multiple faces" condition.
         if len(faces) > 1:
             self.multiple_face_frames += 1
         else:
@@ -117,24 +99,18 @@ class VideoTransformer(VideoTransformerBase):
                     store_face_log(self.student_id, "Multiple Faces Detected!")
             violation_message = "Multiple Faces Detected!"
 
-        # Draw rectangles around detected faces.
         for (x, y, w, h) in faces:
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-        # ---------------------------
-        # Eye-Gaze Tracking (if exactly one face is detected)
-        # ---------------------------
         if len(faces) == 1:
             (fx, fy, fw, fh) = faces[0]
             face_roi_gray = gray[fy:fy + fh, fx:fx + fw]
             eyes = self.eye_cascade.detectMultiScale(face_roi_gray, scaleFactor=1.1, minNeighbors=5)
 
-            # Draw rectangles around detected eyes (in blue).
             for (ex, ey, ew, eh) in eyes:
                 cv2.rectangle(img, (fx + ex, fy + ey), (fx + ex + ew, fy + ey + eh), (255, 0, 0), 2)
 
             violation_detected = False
-            # If fewer than two eyes are detected, count as a potential violation.
             if len(eyes) < 2:
                 violation_detected = True
             else:
@@ -177,12 +153,22 @@ class VideoTransformer(VideoTransformerBase):
             text_size, _ = cv2.getTextSize(violation_message, font, font_scale, thickness)
             text_x = (img.shape[1] - text_size[0]) // 2
             text_y = (img.shape[0] + text_size[1]) // 2
-            cv2.putText(img, violation_message, (text_x, text_y), font, font_scale, (255, 255, 255), thickness,
-                        cv2.LINE_AA)
+            cv2.putText(
+                img,
+                violation_message,
+                (text_x, text_y),
+                font,
+                font_scale,
+                (255, 255, 255),
+                thickness,
+                cv2.LINE_AA,
+            )
 
-        if (self.no_face_warning_count >= self.warning_limit) or \
-                (self.multiple_face_warning_count >= self.warning_limit) or \
-                (self.eye_gaze_warning_count >= self.warning_limit):
+        if (
+            self.no_face_warning_count >= self.warning_limit
+            or self.multiple_face_warning_count >= self.warning_limit
+            or self.eye_gaze_warning_count >= self.warning_limit
+        ):
             self.test_terminated = True
 
         return img
@@ -234,9 +220,7 @@ technical_categories = [
 def get_test_number(username, category):
     db = db_connect()
     collection = db["apti_test"]
-    latest_test_cursor = collection.find({"student_id": username, "category": category}).sort("timestamp",
-                                                                                              pymongo.DESCENDING).limit(
-        1)
+    latest_test_cursor = collection.find({"student_id": username, "category": category}).sort("timestamp",pymongo.DESCENDING).limit(1)
     latest_test = list(latest_test_cursor)
     return latest_test[0]["test_no"] + 1 if latest_test else 1
 
@@ -248,9 +232,9 @@ def get_test_wise_accuracy(username, category, test_no):
     correct_answers = 0
     total_questions = 0
     for test in test_details:
-        correct_answers += test['marks_achieved']
-        total_questions += test['no_of_questions']
-    accuracy = (correct_answers / total_questions) * 100 if total_questions > 0 else 0
+        correct_answers += int(test.get('marks_achieved', 0))
+        total_questions += int(test.get('no_of_questions', 0))
+    accuracy = float((correct_answers / total_questions) * 100) if total_questions > 0 else 0.0
     return round(accuracy, 2)
 
 
@@ -258,16 +242,16 @@ def get_average_accuracy(username, category, current_accuracy=None):
     db = db_connect()
     collection = db['apti_test']
     test_details = collection.find({"student_id": username, "category": category})
-    total_accuracy = 0
+    total_accuracy = 0.0
     test_count = 0
     for test in test_details:
         test_accuracy = get_test_wise_accuracy(username, category, test['test_no'])
-        total_accuracy += test_accuracy
+        total_accuracy += float(test_accuracy)
         test_count += 1
     if current_accuracy is not None:
-        total_accuracy += current_accuracy
-    avg_test_accuracy = (total_accuracy / (test_count + 1)) if test_count > 0 else current_accuracy
-    return round(avg_test_accuracy, 2)
+        total_accuracy += float(current_accuracy)
+    avg_value = float(total_accuracy / (test_count + 1)) if test_count > 0 else float(current_accuracy) if current_accuracy is not None else 0.0
+    return round(avg_value, 2)
 
 
 def store_test_details(username, test_no, category, no_of_questions, marks_achieved, time_taken, avg_test_accuracy):
@@ -304,19 +288,28 @@ def load_questions(category):
         file_name = f"{subcategory}.xlsx"
         file_path = os.path.join(os.path.dirname(__file__), file_name)
         if not os.path.exists(file_path):
-            continue  # Skip if file doesn't exist
+            continue
+
         wb = load_workbook(file_path)
         sheet = wb.active
+        if sheet is None:
+            continue
+
         for row in sheet.iter_rows(min_row=2):
             question_no = row[0].value
             question_text = row[1].value
-            options = row[2].value
+            options_value = row[2].value
             answer = row[3].value
             explanation = row[4].value
             img_path = None
+
             if question_text:
-                for img in sheet._images:
-                    if img.anchor._from.row == row[0].row - 1:
+                for img in getattr(sheet, "_images", []):
+                    anchor = getattr(img, "anchor", None)
+                    anchor_from = getattr(anchor, "_from", None)
+                    anchor_row = getattr(anchor_from, "row", None)
+                    current_row = int(row[0].row) if row[0] is not None else 0
+                    if anchor_row is not None and int(anchor_row) == current_row - 1:
                         img_stream = io.BytesIO()
                         pil_image = PILImage.open(io.BytesIO(img._data()))
                         pil_image.save(img_stream, format='PNG')
@@ -324,25 +317,24 @@ def load_questions(category):
                         image_data = base64.b64encode(img_stream.read()).decode('utf-8')
                         img_path = f"data:image/png;base64,{image_data}"
                         break
-            if question_no and question_text and options and answer:
+
+            if question_no and question_text and options_value and answer:
+                option_text = str(options_value)
                 if subcategory == 'non-verbal-reasoning':
-                    options_list = options.splitlines()
+                    options_list = option_text.splitlines()
                 else:
-                    options_list = options.split(';')
-                options_list = [option.strip() for option in options_list]
+                    options_list = option_text.split(';')
+                options_list = [option.strip() for option in options_list if str(option).strip()]
                 labeled_options = {chr(65 + i): option for i, option in enumerate(options_list)}
                 answer_text = str(answer).strip()
                 if answer_text.upper() in labeled_options:
                     correct_label = answer_text.upper()
                 elif answer_text.upper().startswith("OPTION "):
                     option_letter = answer_text.upper().replace("OPTION ", "").strip()
-                    if option_letter in labeled_options:
-                        correct_label = option_letter
-                    else:
-                        correct_label = "Unknown"
+                    correct_label = option_letter if option_letter in labeled_options else "Unknown"
                 else:
-                    correct_label = "Unknown" 
-                    for label, option in labeled_options.items():   
+                    correct_label = "Unknown"
+                    for label, option in labeled_options.items():
                         if str(option).strip().lower() == answer_text.lower():
                             correct_label = label
                             break
@@ -355,7 +347,7 @@ def load_questions(category):
                     'options': options_list,
                     'labeled_options': labeled_options,
                     'correct_answer': correct_label,
-                    'explanation': explanation.strip() if explanation else "No explanation available."
+                    'explanation': explanation.strip() if isinstance(explanation, str) and explanation.strip() else "No explanation available."
                 })
     return questions
 
@@ -363,10 +355,12 @@ def load_questions(category):
 def rerun_app():
     if hasattr(st, 'rerun'):
         st.rerun()
-    elif hasattr(st, 'experimental_rerun'):
-        st.experimental_rerun()
     else:
-        st.error("Rerun not supported in this version of Streamlit. Please upgrade Streamlit.")
+        experimental_rerun = getattr(st, 'experimental_rerun', None)
+        if callable(experimental_rerun):
+            experimental_rerun()
+        else:
+            st.error("Rerun not supported in this version of Streamlit. Please upgrade Streamlit.")
 
 
 # ---------------------------
@@ -381,24 +375,27 @@ RTC_CONFIGURATION = RTCConfiguration({
 
 # Sidebar: Live Camera Feed, Warnings, and Question Navigation
 st.sidebar.title("Live Camera Feed")
+camera = None
 with st.sidebar:
     try:
-        camera = webrtc_streamer(
+        camera = cast(Any, webrtc_streamer)(
             key="camera",
-            video_transformer_factory=VideoTransformer,
+            video_transformer_factory=lambda: VideoTransformer(),
             rtc_configuration=RTC_CONFIGURATION,
-            async_processing=True,  # Enable asynchronous processing for stability
-            media_stream_constraints={"video": True, "audio": False}
+            async_processing=True,
+            media_stream_constraints={"video": True, "audio": False},
         )
     except Exception as e:
         st.error(f"Error initializing camera: {e}")
         camera = None
 
     # Display warning counts for face detection and eye gaze.
-    if camera and hasattr(camera, "video_transformer") and camera.video_transformer is not None:
-        st.markdown(f"**No Face Warnings:** {camera.video_transformer.no_face_warning_count}")
-        st.markdown(f"**Multiple Face Warnings:** {camera.video_transformer.multiple_face_warning_count}")
-        st.markdown(f"**Eye-Gaze Warnings:** {camera.video_transformer.eye_gaze_warning_count}")
+    if camera is not None:
+        video_transformer = getattr(camera, "video_transformer", None)
+        if video_transformer is not None:
+            st.markdown(f"**No Face Warnings:** {video_transformer.no_face_warning_count}")
+            st.markdown(f"**Multiple Face Warnings:** {video_transformer.multiple_face_warning_count}")
+            st.markdown(f"**Eye-Gaze Warnings:** {video_transformer.eye_gaze_warning_count}")
 
     st.markdown("---")
 
@@ -468,15 +465,23 @@ if not (st.session_state.get("started", False) or st.session_state.get("camera_s
         rerun_app()
 else:
     with st.container():
+        username = ""
+        category = "General"
         if "started" not in st.session_state or not st.session_state.started:
             username = st.text_input("Enter your username:")
             category = st.radio("Choose a category:", ['General', 'Technical'])
+
+            test_no = 1
             if username:
                 test_no = get_test_number(username, category)
                 st.write(f"Test Number: {test_no}")
-            test_type = st.radio("Select Your Test Mode:",
-                                 ["⚡ Quick Challenge (10 Questions)", "🏆 Full Test (30 Questions)"])
+
+            test_type = st.radio(
+                "Select Your Test Mode:",
+                ["⚡ Quick Challenge (10 Questions)", "🏆 Full Test (30 Questions)"],
+            )
             no_of_questions = 10 if "Quick Challenge" in test_type else 30
+
             if st.button("Start Quiz"):
                 # Validate username
                 if username.strip() == "":
@@ -509,11 +514,12 @@ else:
                 st.session_state.test_submitted = False
                 st.session_state.test_terminated = False
 
-
                 # Enable camera proctoring
-                if camera and hasattr(camera, "video_transformer") and camera.video_transformer:
-                    camera.video_transformer.proctoring_enabled = True
-                    camera.video_transformer.student_id = username
+                if camera is not None:
+                    video_transformer = getattr(camera, "video_transformer", None)
+                    if video_transformer is not None:
+                        video_transformer.proctoring_enabled = True
+                        video_transformer.student_id = username
                 st.success("Quiz Started Successfully!")
                 st.write("DEBUG started:", st.session_state.started)
                 st.write("DEBUG question count:", len(st.session_state.questions))
@@ -531,11 +537,13 @@ else:
             )
         ):
         # Disable proctoring and reset warnings once the test is over.
-        if camera and hasattr(camera, "video_transformer"):
-            camera.video_transformer.proctoring_enabled = False
-            camera.video_transformer.no_face_warning_count = 0
-            camera.video_transformer.multiple_face_warning_count = 0
-            camera.video_transformer.eye_gaze_warning_count = 0
+        if camera is not None:
+            video_transformer = getattr(camera, "video_transformer", None)
+            if video_transformer is not None:
+                video_transformer.proctoring_enabled = False
+                video_transformer.no_face_warning_count = 0
+                video_transformer.multiple_face_warning_count = 0
+                video_transformer.eye_gaze_warning_count = 0
 
         with st.container():
             st.markdown("---")

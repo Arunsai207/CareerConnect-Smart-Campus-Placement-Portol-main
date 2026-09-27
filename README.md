@@ -1,298 +1,934 @@
-<<<<<<< HEAD
-# 🎓 CareerConnect: An AI-Powered Intelligent Campus Placement and Career Development Platform
+# 🎓 CareerConnect: AI-Powered Intelligent Campus Placement and Career Development Platform
 
-CareerConnect is an intelligent AI-powered campus placement management platform designed to bridge the gap between students, training and placement officers, and recruiters. It provides a centralized ecosystem for skill assessment, interview preparation, resume enhancement, and placement tracking. The platform leverages Artificial Intelligence and data-driven analytics to evaluate student performance,
+CareerConnect is an **AI-powered campus placement and career development platform** designed to connect students, Training and Placement Officers (TPOs), and recruiters through a centralized placement-preparation ecosystem.
 
-It features advanced modules for resume building, aptitude & technical tests, AI-proctored interviews, and performance analytics to help students improve their career readiness. Resume building helps students create professional industry-standard resumes, aptitude and technical tests evaluate their skills and identify knowledge gaps, AI-proctored interviews provide realistic interview practice with automated feedback, and performance analytics track progress to guide continuous improvement and enhance placement success.
+The platform combines **aptitude assessment, DSA coding, AI-proctored mock interviews, resume building, ATS analysis, performance analytics, and placement management** into a structured sequential workflow.
 
-⚠️ Note: The repository structure is organized into multiple independent components. Following the setup and execution steps provided below in the specified order will ensure the successful deployment and smooth execution of the complete project.
-
+CareerConnect uses **Artificial Intelligence, Machine Learning, Computer Vision, Gemini AI, and data-driven analytics** to help students assess, improve, and track their placement readiness.
 
 ---
 
-## 🚀 Features
+# 🚀 Key Features
 
-### 👨‍🎓 Student Portal
+## 👨‍🎓 Student Portal
 
-- **📊 Aptitude Test**  
- A comprehensive online aptitude assessment platform designed to evaluate students' logical reasoning, quantitative ability, verbal ability, and analytical thinking skills. The system provides time-based tests, automatic evaluation, instant score generation, and AI-based face recognition proctoring to ensure a secure and fair examination environment.
-
-Key Features:
-
-⏱️ Timed aptitude examinations
-🧠 Logical reasoning, quantitative, and verbal ability questions
-🤖 AI-powered face detection and monitoring
-📸 Suspicious activity detection during tests
-✅ Automatic answer evaluation
-📊 Instant result generation
-
-- **📈 Aptitude Analysis Dashboard**  
-An interactive performance analytics dashboard that helps students understand their aptitude preparation level through detailed insights and visual reports.
-
-Key Features:
-
-📌 Topic-wise performance analysis
-📊 Accuracy and score tracking
-⏳ Time management analysis
-💪 Strength and weakness identification
-📈 Performance improvement graphs
-🎯 Personalized preparation recommendations
-
-- **💻 DSA Coding Test**  
-A real-time coding assessment environment that evaluates students' programming skills and problem-solving abilities similar to technical placement coding rounds.
-
-Key Features:
-
-👨‍💻 Online code editor with syntax highlighting
-📝 Multiple programming language support
-⚡ Real-time code execution
-🧪 Automated test case evaluation
-📚 Topic-based coding questions
-🔍 Time and memory complexity analysis
-🗂️ Coding attempt history tracking
-
-- **📉 DSA Performance Dashboard**  
-A detailed coding performance monitoring system that helps students track their progress and improve technical skills.
-
-Key Features:
-
-📊 Coding score analysis
-📈 Progress tracking over multiple attempts
-🧩 Topic-wise coding statistics
-✅ Problem-solving accuracy analysis
-⏱️ Execution time comparison
-🏆 Coding skill improvement insights
-
-- **🎙️ AI-Proctored Mock Interviews**  
-An advanced AI-powered interview simulation platform that provides real-time technical and HR interview experiences similar to actual placement interviews.
-
-Key Features:
-
-🎥 Live webcam-based interview sessions
-🤖 AI interviewer using Gemini AI
-🎤 Voice-based conversation support
-🗣️ Real-time speech recognition
-🔄 Dynamic follow-up question generation
-👁️ Attention and face tracking
-😊 Expression and confidence analysis
-📑 Automated interview feedback report
-
-- **🧾 Resume Builder**  
-A professional resume creation tool that enables students to build industry-ready resumes using predefined templates and structured sections.
-
-Key Features:
-
-📄 Multiple professional resume templates
-✍️ Personal information management
-🎓 Education and certification sections
-💼 Project and experience management
-🛠️ Technical skills customization
-📥 PDF resume download
-🔄 Resume editing and updating
-
-- **📄 Resume ATS Scoring**  
-An AI-based resume evaluation system that analyzes resumes based on Applicant Tracking System (ATS) standards used by companies during recruitment.
-
-Key Features:
-
-🤖 AI-powered resume analysis
-📊 ATS compatibility score generation
-🔑 Keyword matching with job descriptions
-📝 Missing skill identification
-💡 Resume improvement suggestions
-📈 Industry-standard formatting evaluation
-
-- **📢 Announcements**  
-A centralized communication platform where students can receive important placement-related updates and notifications from Training and Placement Officers (TPOs).
-
-Key Features:
-
-📌 Placement announcements
-🏢 Company recruitment updates
-📅 Interview and test schedules
-🔔 Real-time notifications
-📂 Important document sharing
-🎯 Personalized student updates
-
-- **🙍 Student Profile**  
-A personalized student dashboard that stores academic information, skills, achievements, and complete placement preparation history.
-
-Key Features:
-
-👤 Personal and academic information management
-🎓 Education details
-🏆 Certifications and achievements
-💻 Technical skills management
-📊 Complete performance overview
-📈 Aptitude, DSA, and interview history
-🎯 Personalized placement readiness score
+* Student authentication
+* Student profile management
+* Aptitude assessment
+* DSA coding assessment
+* DSA practice
+* Aptitude performance analytics
+* DSA performance analytics
+* AI-proctored mock interviews
+* Resume Builder
+* AI Resume ATS Scoring
+* Placement announcements
+* Placement readiness tracking
+* Sequential qualification workflow
 
 ---
 
-### 🧑‍🏫 TPO & Company Dashboard
+## 📊 Aptitude Assessment
 
-- 📊 Monitor student readiness with analytics  
-- 📋 Post jobs, internships, or announcements  
-- 📈 Export reports on aptitude, coding, and interview performance
+The Aptitude module evaluates students across multiple areas:
 
----
+* Logical reasoning
+* Quantitative aptitude
+* Verbal ability
+* Analytical thinking
+* Technical aptitude
 
-## 🧠 Tech Stack
+### Key Features
 
-### **Technology Stack**
-
-**Frontend Layer:**
-HTML5, CSS3, and Streamlit are used for developing an interactive, user-friendly web interface with real-time dashboards and seamless user interaction.
-
-**Backend Layer:**
-Node.js and Python are used for implementing server-side logic, API development, application processing, and integration of AI-powered functionalities.
-
-**AI/ML Layer:**
-OpenCV, TensorFlow, Scikit-learn, and Face Recognition Libraries are used for computer vision processing, facial analysis, machine learning model development, predictive analytics, and intelligent assessment features.
-
-**Database Layer:**
-MongoDB is used for secure storage and efficient management of student profiles, assessment records, interview reports, performance analytics, and placement-related application data.
-
-
----
-
-## 🛡️ AI Face Recognition Proctoring
-An intelligent AI-powered monitoring system designed to ensure secure and fair online assessments by continuously analyzing candidate behavior through real-time computer vision techniques. The system uses facial recognition, attention tracking, and behavioral analysis to detect suspicious activities during aptitude tests and AI-based mock interviews.
-
-Key Features:
-🎥 Real-Time Face Detection & Recognition
-Continuously monitors the candidate through webcam-based facial recognition to verify identity and maintain assessment integrity.
-
-👁️ AI-Based Attention & Gaze Tracking
-Analyzes head movement, eye direction, and user focus to detect instances of distraction or looking away from the screen.
-
-👥 Multiple Face Detection & Unauthorized Presence Alerts
-Identifies additional faces appearing in the camera frame and generates alerts to prevent unfair practices during assessments.
-
-😊 Facial Expression & Emotion Analysis
-Evaluates facial expressions and behavioral patterns during AI mock interviews to measure confidence, engagement, and communication response.
-
-🚨 Suspicious Activity Monitoring
-Detects abnormal activities such as face absence, frequent movements, and unusual behavior patterns using AI-based vision models.
-
-📊 Proctoring Report Generation
-Generates detailed monitoring reports containing violations, timestamps, confidence scores, and assessment integrity analysis.
-
-🔐 Secure AI-Based Assessment Environment
-Provides automated remote invigilation capabilities without requiring manual supervision, ensuring reliable and scalable online evaluations.
-
-## 🛠️ How to Run Locally
-
-### Prerequisites
-
-Before running the project, make sure the following are installed and set up on your system:
-
-- ✅ MongoDB installed and running  
-  → [Download MongoDB](https://www.mongodb.com/try/download/community)
-
-- ✅ Node.js installed  
-  → [Download Node.js](https://nodejs.org/en/download/)
+* Timed examinations
+* Automatic evaluation
+* Instant score generation
+* Topic-based questions
+* AI-powered face detection
+* Multiple-face detection
+* Suspicious activity detection
+* Attention monitoring
+* Assessment history
+* Performance analysis
+* Qualification tracking
 
 ---
 
-## 🔐 API Configuration
+# 🔐 Aptitude Qualification
 
-To enable AI-powered features such as interview feedback and resume scoring using Gemini AI, you'll need to set up your Gemini API Key.
+The first round of CareerConnect is the Aptitude Assessment.
 
-1. Get your Gemini API Key:
-   - Visit: https://aistudio.google.com/app/apikey
-   - Sign in with your Google account and generate a new API key.
+| Requirement              |        Value |
+| ------------------------ | -----------: |
+| Maximum Score            | **30 Marks** |
+| Minimum Qualification    | **15 Marks** |
+| Qualification Percentage |      **50%** |
 
-2. Add the API key to the respective .env files:
+```text
+Score < 15/30
+      ↓
+❌ Not Qualified
+      ↓
+DSA Remains Locked
+```
 
-📁 MockInter/.env
-📁 ResumeATS/.env
+```text
+Score >= 15/30
+      ↓
+✅ Qualified
+      ↓
+DSA Unlocked
+```
 
+The aptitude score and qualification status are stored in the backend/database.
+
+The backend qualification state is treated as the authoritative source for unlocking the next round.
+
+---
+
+# ⚡ Quick Aptitude Test
+
+CareerConnect can also support a shorter Quick Aptitude Test.
+
+| Requirement              |        Value |
+| ------------------------ | -----------: |
+| Maximum Score            | **10 Marks** |
+| Minimum Qualification    |  **5 Marks** |
+| Qualification Percentage |      **50%** |
+
+```text
+Quick Test: 5/10
+      ↓
+Equivalent Standard Qualification
+      ↓
+✅ Qualified
+```
+
+```text
+Quick Test: <5/10
+      ↓
+❌ Not Qualified
+```
+
+---
+
+# 📈 Aptitude Analysis Dashboard
+
+The Aptitude Dashboard provides detailed performance insights.
+
+### Features
+
+* Topic-wise performance
+* Accuracy analysis
+* Score tracking
+* Time management analysis
+* Strength identification
+* Weakness identification
+* Performance graphs
+* Assessment history
+* Preparation recommendations
+
+---
+
+# 💻 DSA Coding Assessment
+
+The DSA module provides a coding environment designed to simulate technical placement coding rounds.
+
+### Features
+
+* Online code editor
+* Syntax highlighting
+* Multiple programming languages
+* Code execution
+* Automated test cases
+* Topic-based coding problems
+* Coding attempt tracking
+* Problem-solving analysis
+* Coding performance dashboard
+* Progress tracking
+
+---
+
+# 🔒 Sequential DSA Access Control
+
+DSA is protected by the Aptitude qualification gate.
+
+Students must first qualify in Aptitude.
+
+```text
+ROUND 1
+APTITUDE
+   ↓
+Score >= 15/30
+   ↓
+✅ Qualified
+   ↓
+DSA UNLOCKED
+```
+
+If Aptitude is not qualified:
+
+```text
+APTITUDE NOT QUALIFIED
+   ↓
+❌ DSA LOCKED
+```
+
+The DSA module can remain visible in the Student Portal, allowing students to understand the next stage without allowing them to access protected functionality.
+
+### Protected DSA Components
+
+* DSA Test
+* DSA Practice
+* DSA Dashboard
+* Protected DSA APIs
+* Direct DSA URLs
+
+Example:
+
+```text
+DSA Practice Platform
+
+Enter your username
+
+DSA Practice is locked.
+
+Qualify in the Aptitude Round first.
+```
+
+---
+
+# 🛡️ DSA Backend Security
+
+DSA access is not controlled only through frontend visibility.
+
+The backend verifies the student's qualification state before providing access.
+
+The system is designed to prevent bypass attempts through:
+
+* Direct URL access
+* Browser refresh
+* Frontend state manipulation
+* LocalStorage manipulation
+* SessionStorage manipulation
+* URL parameter manipulation
+* Direct protected API requests
+
+The database/backend qualification state is treated as the authoritative source.
+
+---
+
+# ⏱️ DSA Minimum Duration Qualification
+
+Students must satisfy the minimum DSA assessment duration before becoming eligible for the AI Mock Interview.
+
+### Minimum Required Duration
+
+**30 Minutes**
+
+```text
+DSA Duration < 30 Minutes
+        ↓
+❌ Interview Not Eligible
+```
+
+```text
+DSA Duration >= 30 Minutes
+        ↓
+✅ Interview Eligible
+```
+
+| DSA Duration  | Result         |
+| ------------- | -------------- |
+| 5 minutes     | ❌ Not Eligible |
+| 10 minutes    | ❌ Not Eligible |
+| 20 minutes    | ❌ Not Eligible |
+| 29:59 minutes | ❌ Not Eligible |
+| 30:00 minutes | ✅ Eligible     |
+| 31+ minutes   | ✅ Eligible     |
+
+---
+
+# 🔐 Server-Side DSA Timing
+
+The DSA duration requirement is validated using server-side timestamps.
+
+The backend tracks:
+
+* DSA start time
+* DSA completion time
+* Elapsed duration
+* Completion status
+* Qualification status
+* Interview eligibility
+
+This prevents students from bypassing the duration requirement through:
+
+* Browser timer manipulation
+* LocalStorage
+* SessionStorage
+* Frontend state manipulation
+* URL parameters
+* Modified request payloads
+
+Refreshing the browser does not reset the server-side timing information.
+
+---
+
+# 📉 DSA Performance Dashboard
+
+The DSA Dashboard provides coding-performance insights.
+
+### Features
+
+* Coding score analysis
+* Progress tracking
+* Topic-wise statistics
+* Problem-solving accuracy
+* Execution-time comparison
+* Test-case performance
+* Coding attempt history
+* Technical skill improvement insights
+
+---
+
+# 🎙️ AI-Proctored Mock Interview
+
+The AI Mock Interview represents **Round 3** of the CareerConnect sequential workflow.
+
+The system uses AI and computer vision to simulate an interview environment.
+
+### Features
+
+* AI interviewer
+* Gemini AI integration
+* Voice-based interaction
+* Speech recognition
+* Dynamic follow-up questions
+* Webcam monitoring
+* Face tracking
+* Attention monitoring
+* Facial analysis
+* Interview performance analysis
+* Automated feedback generation
+
+---
+
+# 🔐 Interview Qualification
+
+The AI Mock Interview remains visible in the Student Portal but is locked until all previous requirements are satisfied.
+
+Students must:
+
+1. Qualify Aptitude with **15/30 or higher**
+2. Access the DSA round
+3. Complete the DSA assessment
+4. Spend at least **30 minutes** in DSA
+5. Satisfy the existing DSA qualification requirements
+
+```text
+Aptitude Qualified
+       +
+DSA Completed
+       +
+DSA Duration >= 30 Minutes
+       +
+DSA Qualified
+       ↓
+Interview Unlocked
+```
+
+Example locked state:
+
+```text
+AI Mock Interview
+
+Interview is locked.
+
+Complete the Aptitude and DSA
+qualification requirements before starting.
+```
+
+---
+
+# 🛡️ Interview Backend Protection
+
+The backend verifies interview eligibility before allowing access.
+
+The system is designed to prevent bypass attempts through:
+
+* Direct interview URLs
+* Frontend manipulation
+* LocalStorage
+* SessionStorage
+* Browser refresh
+* URL parameters
+* Direct API requests
+* Starting the interview before completing DSA
+
+Frontend visibility is used for user experience, while backend authorization provides the actual security boundary.
+
+---
+
+# 🔄 Complete Sequential Placement Workflow
+
+```text
+                    STUDENT LOGIN
+                         ↓
+                 STUDENT DASHBOARD
+                         ↓
+                ┌─────────────────┐
+                │     ROUND 1     │
+                │  APTITUDE TEST  │
+                │   Max: 30       │
+                │   Pass: 15      │
+                └────────┬────────┘
+                         ↓
+                  Score >= 15/30?
+                    /          \
+                  NO            YES
+                  ↓              ↓
+             DSA LOCKED     DSA UNLOCKED
+                                 ↓
+                ┌────────────────────────┐
+                │        ROUND 2         │
+                │      DSA ASSESSMENT    │
+                └───────────┬────────────┘
+                            ↓
+                     DSA Completed?
+                            ↓
+                    Duration >= 30 min?
+                            ↓
+                     DSA Qualification
+                            ↓
+                ┌────────────────────────┐
+                │        ROUND 3         │
+                │    AI MOCK INTERVIEW   │
+                └────────────────────────┘
+                            ↓
+                     AI Feedback Report
+```
+
+---
+
+# 🏆 Round-Based Architecture
+
+## Round 1 — Aptitude
+
+```text
+Maximum Score: 30
+Minimum Score: 15
+Qualification: 50%
+```
+
+Aptitude qualification is required before DSA access.
+
+## Round 2 — DSA
+
+```text
+Aptitude Qualified
+       ↓
+DSA Access
+       ↓
+DSA Completion
+       ↓
+Minimum 30-Minute Duration
+       ↓
+DSA Qualification
+```
+
+## Round 3 — AI Mock Interview
+
+```text
+Aptitude Qualified
+       +
+DSA Completed
+       +
+30-Minute Minimum Duration
+       +
+DSA Qualified
+       ↓
+AI Mock Interview
+```
+
+---
+
+# 📄 Resume Builder
+
+CareerConnect provides a professional Resume Builder.
+
+### Features
+
+* Professional resume templates
+* Personal information
+* Education
+* Certifications
+* Projects
+* Experience
+* Technical skills
+* Achievements
+* PDF generation
+* Resume editing
+
+---
+
+# 🤖 Resume ATS Scoring
+
+The Resume ATS module analyzes resumes according to Applicant Tracking System principles.
+
+### Features
+
+* AI-powered resume analysis
+* ATS compatibility score
+* Keyword matching
+* Missing skill identification
+* Resume improvement suggestions
+* Job-description analysis
+* Formatting evaluation
+* Resume quality analysis
+
+---
+
+# 📢 Placement Announcements
+
+The Announcements module provides centralized communication between TPOs, companies, and students.
+
+### Features
+
+* Placement announcements
+* Company recruitment updates
+* Interview schedules
+* Assessment schedules
+* Placement notifications
+* Important document sharing
+* Student-specific updates
+
+---
+
+# 🙍 Student Profile
+
+The Student Profile provides a centralized view of academic and placement information.
+
+### Features
+
+* Personal information
+* Academic information
+* Certifications
+* Achievements
+* Technical skills
+* Aptitude performance
+* DSA performance
+* Interview history
+* Placement readiness
+* Qualification status
+
+---
+
+# 🧑‍🏫 TPO & Company Dashboard
+
+CareerConnect provides dedicated functionality for Training and Placement Officers and recruiters.
+
+### Features
+
+* Student readiness monitoring
+* Job posting
+* Internship posting
+* Placement announcements
+* Student performance analytics
+* Assessment qualification tracking
+* Sequential round monitoring
+* Performance reports
+* Report export
+
+---
+
+# 🧠 Technology Stack
+
+## Frontend
+
+* HTML5
+* CSS3
+* JavaScript
+* Streamlit
+* Interactive dashboards
+
+## Backend
+
+* Node.js
+* Express.js
+* Python
+
+## Database
+
+* MongoDB
+
+## AI / ML
+
+* Gemini AI
+* OpenCV
+* TensorFlow
+* Scikit-learn
+* Face Recognition libraries
+
+## Computer Vision
+
+* Face detection
+* Face recognition
+* Multiple-face detection
+* Attention monitoring
+* Visual behavior analysis
+
+---
+
+# 🤖 AI-Based Proctoring
+
+CareerConnect uses AI-powered computer vision to improve assessment integrity.
+
+### Monitoring Capabilities
+
+* Face detection
+* Face recognition
+* Face absence detection
+* Multiple-face detection
+* Attention monitoring
+* Head movement analysis
+* Eye/gaze analysis
+* Suspicious activity detection
+* Event timestamp recording
+
+
+# 📊 Proctoring Information
+
+The system can maintain:
+
+* Detection events
+* Event timestamps
+* Face information
+* Suspicious activity information
+* Assessment integrity indicators
+
+---
+
+# 📁 Project Structure
+
+```text
+CareerConnect-Smart-Campus-Placement-Portal/
+│
+├── index.html
+├── student-login.html
+├── studentdashboard.html
+├── studentprofile.html
+│
+├── admin-login.html
+├── admin-dashboard.html
+├── adminprofile.html
+├── admin-announce.html
+│
+├── company-login.html
+├── company-dashboard.html
+├── compannounce.html
+│
+├── interview.html
+├── interview.js
+├── interview.css
+│
+├── Aptitude/
+│   ├── AptiApp.py
+│   ├── InteractiveDashboard.py
+│   ├── aptitude/
+│   ├── logical-reasoning/
+│   ├── verbal-ability/
+│   ├── verbal-reasoning/
+│   ├── data-interpretation/
+│   ├── non-verbal-reasoning/
+│   ├── c-programming/
+│   ├── cpp-programming/
+│   ├── c-sharp-programming/
+│   ├── java-programming/
+│   └── templates/
+│
+├── CodingPract/
+│   ├── DSA_app_db.py
+│   └── DSA_dash.py
+│
+├── MockInter/
+│   └── app.py
+│
+├── ResumeATS/
+│   └── app.py
+│
+├── Verbal_Q/
+├── Templates/
+│
+├── css/
+├── js/
+│   └── vendor/
+├── images/
+├── fonts/
+├── public/
+├── upload/
+├── logs/
+│
+├── server.js
+├── effserver.js
+├── package.json
+├── package-lock.json
+├── requirements.txt
+├── .gitignore
+├── LICENSE
+└── README.md
+```
+
+# 🧩 Core Modules
+
+| Directory / File   | Purpose                            |
+| ------------------ | ---------------------------------- |
+| `Aptitude/`        | Aptitude and technical assessments |
+| `CodingPract/`     | DSA coding and practice            |
+| `MockInter/`       | AI mock interview and proctoring   |
+| `ResumeATS/`       | Resume Builder and ATS analysis    |
+| `Verbal_Q/`        | Verbal question bank               |
+| `Templates/`       | Resume/document templates          |
+| `server.js`        | Main Express backend               |
+| `css/`             | Global styling                     |
+| `js/`              | JavaScript functionality           |
+| `public/`          | Static/public resources            |
+| `upload/`          | Uploaded files                     |
+| `logs/`            | Application logs                   |
+| `requirements.txt` | Python dependencies                |
+| `package.json`     | Node.js configuration              |
+
+
+# 🔐 Environment Configuration
+
+AI-powered modules require a Gemini API key.
+
+Configure the environment variables required by:
+
+```text
+MockInter\.env
+ResumeATS\.env
+```
+
+Example:
+
+```env
 GEMINI_API_KEY=your_api_key_here
+```
 
-⚠️ Make sure to replace your_api_key_here with your actual API key. Do not share this key publicly.
+Replace the placeholder with your actual Gemini API key.
 
-3. Restart the modules (MockInterview & ResumeATS) after setting the environment variables.
+>
+
+# 🌐 Application Routes
+
+| Route                  | Module                |
+| ---------------------- | --------------------- |
+| `/`                    | CareerConnect Home    |
+| `/aptitude/`           | Aptitude Assessment   |
+| `/aptitude-dashboard/` | Aptitude Dashboard    |
+| `/dsa/`                | DSA Coding Assessment |
+| `/dsa-dashboard/`      | DSA Dashboard         |
+| `/mockinterview/`      | AI Mock Interview     |
+| `/resumeats/`          | Resume Builder / ATS  |
+
+The exact routing depends on the Express and Streamlit integration configured in `server.js`.
 
 ---
 
-### Steps
+# 🔄 Startup Order
 
-2. ** Move To the Folder
-cd CareerConnect-Smart-Campus-Placement-Portal-main
+Use the following order when running the complete platform:
 
-
-2. ** Start the Node.js server**
-
-```bash
-node server.js
+```text
+1. MongoDB
+      ↓
+2. Express Server
+      ↓
+3. Aptitude
+      ↓
+4. Aptitude Dashboard
+      ↓
+5. DSA
+      ↓
+6. DSA Dashboard
+      ↓
+7. AI Mock Interview
+      ↓
+8. Resume / ATS
+      ↓
+9. Open http://localhost:3000
 ```
 
-3. **Run each Streamlit module in a new terminal:**
+Keep all required CMD windows running while using the platform.
 
-```bash
-# Aptitude Test
-cd CareerConnect-Smart-Campus-Placement-Portal-main
-cd Aptitude
-streamlit run AptiApp.py --server.port 8501
-
-# Aptitude Dashboard
-
-cd CareerConnect-Smart-Campus-Placement-Portal-main
-cd Aptitude
-streamlit run InteractiveDashboard.py --server.port 8502
-
-# DSA Test
-cd CareerConnect-Smart-Campus-Placement-Portal-main
-cd CodingPract
-streamlit run DSA_app_db.py --server.port 8503
-
-# DSA Dashboard
-cd CareerConnect-Smart-Campus-Placement-Portal-main
-cd CodingPract
-streamlit run DSA_dash.py --server.port 8504
-
-# Mock Interview
-cd CareerConnect-Smart-Campus-Placement-Portal-main
-cd MockInter
-streamlit run app.py --server.port 8505
-
-# Resume Builder & ATS
-cd CareerConnect-Smart-Campus-Placement-Portal-main
-cd ResumeATS
-streamlit run app.py --server.port 8506
-```
-
-4. **Launch the frontend**
-
-Open `index.html` in a browser.
 ---
 
-## 📈 Future Enhancements
+# 🔐 Assessment Security Architecture
 
-## 🚀 Future Enhancements
+CareerConnect uses backend-controlled qualification states.
 
-* **🌐 Multi-Language Support**
-  Extend the platform with regional language capabilities to improve accessibility and provide a personalized experience for students from diverse backgrounds.
+```text
+Student Authentication
+        ↓
+Qualification Status
+        ↓
+Aptitude Qualification
+        ↓
+DSA Authorization
+        ↓
+DSA Completion
+        ↓
+Server-Side Duration
+        ↓
+DSA Qualification
+        ↓
+Interview Authorization
+        ↓
+AI Mock Interview
+```
 
-* **🏆 Gamified Assessment System**
-  Introduce gamification features such as leaderboards, achievement badges, performance rankings, and challenges to encourage student engagement and continuous learning.
+The frontend controls the user experience, while the backend controls authorization.
 
-* **📅 Real-Time Placement Drive Tracking**
-  Implement live placement drive monitoring with company updates, recruitment schedules, application status, and selection progress tracking.
+---
 
-* **📊 Advanced Admin Dashboard & Reporting**
-  Develop a comprehensive administrative dashboard with data visualization, student performance insights, placement analytics, and downloadable reports for TPOs and administrators.
+# 📊 Qualification State Tracking
 
-* **🔔 SMS & Email Notification Integration**
-  Enable automated communication through SMS and email alerts for placement announcements, assessment schedules, interview updates, and important notifications.
+The system tracks:
 
-* **📱 Mobile-Responsive Platform Enhancement**
-  Optimize the application for mobile devices to provide seamless access across smartphones, tablets, and different screen sizes.
+* Aptitude completion
+* Aptitude score
+* Aptitude qualification
+* DSA access status
+* DSA start time
+* DSA completion time
+* DSA elapsed duration
+* DSA duration qualification
+* DSA completion status
+* DSA qualification
+* Interview unlock status
+* Interview eligibility
 
-* **🤖 Advanced AI Career Recommendations** *(Additional Enhancement)*
-  Integrate AI-driven career guidance to provide personalized learning paths, skill recommendations, and job role suggestions based on student performance and industry requirements.
-  
-=======
-# Campus-Placement-Portol-main
->>>>>>> 4d4088e908b21ff6a868d0e9f8b35f6f65d3d9a9
+This allows CareerConnect to maintain a controlled sequential placement workflow.
+
+---
+
+# 🎯 Placement Readiness
+
+CareerConnect combines multiple preparation areas:
+
+```text
+Aptitude
+    +
+DSA
+    +
+AI Interview
+    +
+Resume / ATS
+    +
+Performance Analytics
+        ↓
+Placement Readiness
+```
+
+The platform helps students:
+
+* Identify skill gaps
+* Improve aptitude performance
+* Practice coding
+* Prepare for interviews
+* Improve resumes
+* Track preparation progress
+* Understand strengths and weaknesses
+* Improve overall placement readiness
+
+---
+
+# 🔮 Future Enhancements
+
+### 🌐 Multi-Language Support
+
+* Regional language support
+* Improved accessibility
+
+### 🏆 Gamification
+
+* Leaderboards
+* Achievement badges
+* Coding challenges
+* Aptitude challenges
+* Performance rankings
+
+### 📅 Placement Drive Tracking
+
+* Company updates
+* Recruitment schedules
+* Application status
+* Interview schedules
+* Selection progress
+
+### 📊 Advanced TPO Analytics
+
+* Student analytics
+* Assessment analytics
+* Placement statistics
+* Interview analytics
+* Downloadable reports
+
+### 🔔 Notifications
+
+* Email notifications through otps while login 
+* Assessment reminders
+* Interview reminders
+* Placement alerts
+
+### 📱 Mobile Enhancement
+
+* Smartphone support
+* Tablet support
+* Responsive dashboards
+
+### 🤖 AI Career Recommendations
+
+* Job-role recommendations
+* Skill-gap analysis
+* Learning paths
+* Certification suggestions
+* Interview preparation plans
+* Personalized improvement strategies
+
+---
+
+# 🎯 Project Objective
+
+The primary objective of CareerConnect is to create a **centralized, intelligent, and secure campus placement preparation ecosystem** where students can continuously assess and improve their career readiness.
+
+# 🌟 CareerConnect
+
+**AI-Powered Intelligent Campus Placement and Career Development Platform**
+
+```text
+                    CAREERCONNECT
+                          │
+          ┌───────────────┼───────────────┐
+          ↓               ↓               ↓
+      APTITUDE           DSA         AI INTERVIEW
+          │               │               │
+          ↓               ↓               ↓
+      ANALYSIS       PERFORMANCE       FEEDBACK
+          │               │               │
+          └───────────────┼───────────────┘
+                          ↓
+                     RESUME + ATS
+                          ↓
+                  PLACEMENT READINESS
+                          ↓
+                    CAREER SUCCESS
+
+# 📜 License
+
+This project is developed as an **academic and placement-preparation project**.
+
+## 👨‍💻 CareerConnect
+
+**Assess • Analyze • Improve • Practice • Qualify • Interview • Prepare**

@@ -61,7 +61,7 @@
         <h2>Admin Dashboard</h2>
         <a href="addashboard.html">Dashboard</a>
         <a href="admin-dashboard.html">Manage Students</a>
-        <a href="admin-profile.html">Admin Profile</a>
+        <a href="adminprofile.html">Admin Profile</a>
         <a href="admin-announce.html">Announcements</a>
         <a href="#" id="logout-link">Logout</a>
     </div>
@@ -132,7 +132,10 @@
             if (!adminData) return;
 
             try {
-                const response = await fetch(`http://localhost:3000/admin/profile?username=${adminData.username}`);
+                const token = localStorage.getItem('careerconnectToken');
+                const response = await fetch('/admin/profile', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 if (!response.ok) throw new Error("Failed to fetch profile");
 
                 const profileData = await response.json();
@@ -180,7 +183,7 @@
             try {
                 const response = await fetch('http://localhost:3000/admin/update', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('careerconnectToken')}` },
                     body: JSON.stringify(updatedProfile)
                 });
 

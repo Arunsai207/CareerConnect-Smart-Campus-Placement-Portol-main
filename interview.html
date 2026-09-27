@@ -27,12 +27,16 @@
             <div class="action-buttons">
               <button class="icon-btn" id="toggleMicBtn">Mic</button>
               <button class="icon-btn" id="stopInterviewBtn">Pause</button>
-              <button class="primary-btn" id="startInterviewBtn">Start Interview</button>
+              <button class="primary-btn" id="startInterviewBtn" disabled>Start Interview</button>
             </div>
           </div>
         </header>
 
         <main class="main-grid">
+          <div class="round-lock" id="roundLock" role="alert" hidden>
+            <strong id="roundLockTitle">Interview is locked.</strong>
+            <span id="roundLockMessage">Complete and qualify the Aptitude and DSA rounds before starting the interview.</span>
+          </div>
           <section class="left-stage">
             <div class="video-row">
               <div class="video-card videocard-empty">

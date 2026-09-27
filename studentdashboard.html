@@ -11,54 +11,66 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      display: flex;
-      height: 100vh;
+      min-height: 100vh;
+      background-color: #ecf0f1;
     }
 
     .dashboard {
       display: flex;
       width: 100%;
-      height: 100%;
+      min-height: 100vh;
+      align-items: stretch;
     }
 
     .sidebar {
+      position: sticky;
+      top: 0;
+      flex: 0 0 250px;
       width: 250px;
+      height: 100vh;
+      box-sizing: border-box;
       background-color: #2c3e50;
       color: white;
       padding: 20px;
-      height: 100%;
+      overflow-y: auto;
     }
 
     .sidebar h2 {
       text-align: center;
-      margin-bottom: 20px;
+      margin: 10px 0 28px;
+      font-size: 23px;
     }
 
     .sidebar ul {
       list-style: none;
+      margin: 0;
       padding: 0;
     }
 
     .sidebar ul li {
-      margin-bottom: 15px;
+      margin-bottom: 8px;
     }
 
     .sidebar ul li a {
       color: white;
       text-decoration: none;
-      font-size: 18px;
+      font-size: 16px;
       display: block;
-      padding: 10px;
-      border-radius: 5px;
-      transition: background-color 0.3s;
+      padding: 12px 14px;
+      border-radius: 8px;
+      transition: background-color 0.2s, padding-left 0.2s;
     }
 
     .sidebar ul li a:hover {
       background-color: #34495e;
+      padding-left: 18px;
     }
 
     .main-content {
       flex-grow: 1;
+      min-width: 0;
+      min-height: 100vh;
+      box-sizing: border-box;
       padding: 20px;
       background-color: #ecf0f1;
     }
@@ -70,9 +82,49 @@
     #content {
       margin-top: 20px;
       padding: 20px;
+      min-height: calc(100vh - 120px);
+      box-sizing: border-box;
       background-color: white;
       border-radius: 5px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 700px) {
+      .dashboard {
+        display: block;
+      }
+
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        padding: 14px;
+      }
+
+      .sidebar h2 {
+        margin: 4px 0 12px;
+      }
+
+      .sidebar ul {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .sidebar ul li {
+        margin-bottom: 0;
+      }
+
+      .main-content {
+        min-height: auto;
+        padding: 14px;
+      }
+
+      #content {
+        min-height: auto;
+        padding: 16px;
+      }
     }
 
     .performance-grid {
@@ -107,6 +159,142 @@
     .performance-card small,
     .performance-note {
       color: #667085;
+    }
+
+    .overall-section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid #e4e9f0;
+    }
+
+    .overall-section h2 {
+      margin: 0 0 6px;
+      color: #243b53;
+    }
+
+    .overall-section-intro {
+      margin: 0 0 18px;
+      color: #667085;
+    }
+
+    .overall-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .overall-card {
+      padding: 16px;
+      border: 1px solid #e4e9f0;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .overall-card h4 {
+      margin: 0 0 8px;
+      color: #52606d;
+      font-size: 14px;
+    }
+
+    .overall-value {
+      display: block;
+      margin-bottom: 10px;
+      color: #243b53;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .overall-progress {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e9eef5;
+    }
+
+    .overall-progress span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: #2c5364;
+    }
+
+    .overall-subgrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .overall-panel {
+      padding: 18px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e4e9f0;
+    }
+
+    .overall-panel h3 {
+      margin: 0 0 12px;
+      color: #243b53;
+      font-size: 17px;
+    }
+
+    .overall-list {
+      margin: 0;
+      padding-left: 20px;
+      color: #52606d;
+    }
+
+    .overall-list li {
+      margin: 8px 0;
+    }
+
+    .overall-chip {
+      display: inline-block;
+      margin: 4px 4px 0 0;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .overall-chip.weak {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .overall-chip.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .overall-company {
+      padding: 10px 0;
+      border-top: 1px solid #e4e9f0;
+    }
+
+    .overall-company:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .overall-company strong {
+      color: #243b53;
+    }
+
+    @media (max-width: 620px) {
+      .overall-section {
+        padding-top: 18px;
+      }
+    }
+
+    .module-link {
+      display: inline-block;
+      margin-top: 10px;
+      color: #2c3e50;
+      font-weight: 700;
+      text-decoration: none;
     }
 
     .form-group {
@@ -187,6 +375,249 @@
     .announcement small {
       color: #777;
     }
+
+    .application-card {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid #dfe6ee;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .application-card button {
+      padding: 9px 16px;
+      border: 0;
+      border-radius: 6px;
+      color: #fff;
+      background: #2c3e50;
+      cursor: pointer;
+    }
+
+    .application-card button:disabled {
+      cursor: not-allowed;
+      opacity: .7;
+    }
+
+    .placement-section {
+      margin-top: 28px;
+    }
+
+    .placement-card {
+      padding: 20px;
+      border: 1px solid #e4e9f0;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(44, 62, 80, 0.06);
+      margin-bottom: 14px;
+    }
+
+    .placement-card h3 {
+      margin: 0 0 14px;
+      color: #1f2d3d;
+      font-size: 17px;
+    }
+
+    .placement-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 24px;
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, #243b53, #2c5364);
+      box-shadow: 0 12px 24px rgba(36, 59, 83, 0.2);
+    }
+
+    .placement-hero h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    .placement-hero p {
+      margin: 0;
+      color: #dbeafe;
+    }
+
+    .placement-hero-score {
+      min-width: 132px;
+      padding: 14px 18px;
+      text-align: center;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .placement-hero-score strong {
+      display: block;
+      font-size: 28px;
+    }
+
+    .placement-hero-score small {
+      color: #dbeafe;
+    }
+
+    .placement-summary-grid,
+    .placement-round-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .placement-summary-card {
+      padding: 18px;
+      border: 1px solid #e4e9f0;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(44, 62, 80, 0.05);
+    }
+
+    .placement-summary-card span,
+    .placement-summary-card small {
+      display: block;
+      color: #718096;
+    }
+
+    .placement-summary-card strong {
+      display: block;
+      margin: 8px 0;
+      color: #243b53;
+      font-size: 21px;
+    }
+
+    .placement-round-card {
+      position: relative;
+      min-height: 138px;
+      padding: 20px;
+      border: 1px solid #e4e9f0;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(44, 62, 80, 0.05);
+    }
+
+    .placement-round-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 18px;
+      bottom: 18px;
+      width: 4px;
+      border-radius: 4px;
+      background: #94a3b8;
+    }
+
+    .placement-round-card.qualified::before {
+      background: #16a34a;
+    }
+
+    .placement-round-card.locked::before,
+    .placement-round-card.not-qualified::before {
+      background: #ef4444;
+    }
+
+    .placement-round-card.available::before {
+      background: #2563eb;
+    }
+
+    .placement-round-card h4 {
+      margin: 0 0 12px;
+      color: #243b53;
+      font-size: 17px;
+    }
+
+    .placement-round-score {
+      margin: 14px 0 6px;
+      color: #243b53;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .placement-muted {
+      color: #718096;
+      font-size: 14px;
+    }
+
+    .placement-skill-group {
+      padding: 18px 20px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid #e4e9f0;
+    }
+
+    .placement-skill-group h4 {
+      margin: 0 0 12px;
+      color: #243b53;
+    }
+
+    .placement-skill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .placement-company-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 0;
+      border-top: 1px solid #e4e9f0;
+    }
+
+    .placement-company-card:first-child {
+      border-top: 0;
+    }
+
+    .placement-company-card h4 {
+      margin: 0 0 8px;
+      color: #243b53;
+    }
+
+    @media (max-width: 900px) {
+      .placement-summary-grid,
+      .placement-round-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .placement-hero,
+      .placement-company-card {
+        display: block;
+      }
+
+      .placement-hero-score {
+        margin-top: 18px;
+      }
+
+      .placement-summary-grid,
+      .placement-round-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .placement-pill {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #e2e8f0;
+    }
+
+    .placement-pill.qualified {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .placement-pill.locked,
+    .placement-pill.not_qualified {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .placement-pill.available {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
   </style>
 </head>
 
@@ -202,6 +633,8 @@
         <li><a href="#" id="resume">Resume Builder</a></li>
         <li><a href="#" id="resumeats">Resume Scanner</a></li>
         <li><a href="#" id="announcements">Announcements</a></li>
+        <li><a href="#" id="applications">My Applications</a></li>
+        <li><a href="#" id="notifications">Notifications <span id="notificationBadge"></span></a></li>
         <li><a href="#" id="profile">Profile</a></li>
         <li><a href="#" id="logout">Logout</a></li>
       </ul>
@@ -217,58 +650,260 @@
     document.addEventListener('DOMContentLoaded', function () {
       const content = document.getElementById('content');
 
-      // Fetch the full name from localStorage
-      const fullName = localStorage.getItem('fullName');
-      if (fullName) {
-        document.getElementById('fullName').textContent = fullName;
+      async function resetTestDataIfRequested() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('reset') !== '1') return;
+        const token = localStorage.getItem('careerconnectToken');
+        if (!token) return;
+        const response = await fetch('/api/student/reset-test-data', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+          cache: 'no-store'
+        });
+        if (!response.ok) {
+          throw new Error('Unable to reset previous test data.');
+        }
+        ['aptitudeScore', 'dsaScore', 'interviewScore', 'resumeScore'].forEach((key) => localStorage.removeItem(key));
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       async function showDashboard() {
-        const username = localStorage.getItem('username') || 'Not available';
-        let aptitudeScore = localStorage.getItem('aptitudeScore') || 'Not attempted';
-        let performanceMessage = '';
-        if (username !== 'Not available') {
+        const token = localStorage.getItem('careerconnectToken');
+        let account = null;
+        if (token) {
           try {
-            const response = await fetch(`http://localhost:3000/api/students/${encodeURIComponent(username)}/performance`, {
-              headers: { Accept: 'application/json' },
+            const accountResponse = await fetch('/api/student/me', {
+              headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
               cache: 'no-store'
             });
-            const responseText = await response.text();
-            let performance;
-            try {
-              performance = JSON.parse(responseText);
-            } catch (parseError) {
-              throw new Error(`Server returned ${response.status} ${response.statusText}, not JSON. Restart Node with "npm start".`);
-            }
-            if (!response.ok) {
-              throw new Error(performance.error || `Request failed (${response.status})`);
-            }
-            if (performance.aptitude) {
-              aptitudeScore = `${performance.aptitude.score}/${performance.aptitude.total} (${performance.aptitude.accuracy}%)`;
-            } else {
-              performanceMessage = '<p class="performance-note">No aptitude result was found for this username. Use the same username in the quiz and dashboard.</p>';
-            }
+            const accountData = await accountResponse.json();
+            if (!accountResponse.ok) throw new Error(accountData.error || 'Unable to load the current student account.');
+            account = accountData.user;
+            localStorage.setItem('username', account.username);
+            localStorage.setItem('fullName', account.username);
+            localStorage.setItem('email', account.email || '');
+            // The authenticated username is the stable identity used by this dashboard.
+            // This prevents a legacy display name in an existing record from appearing
+            // as the current student's welcome name.
+            document.getElementById('fullName').textContent = account.username;
           } catch (error) {
-            console.error('Unable to load aptitude performance:', error);
-            performanceMessage = `<p class="performance-note">Performance could not be loaded: ${error.message}</p>`;
+            console.error('Unable to load authenticated student:', error);
+            document.getElementById('fullName').textContent = 'Student';
           }
         }
-        const dsaScore = localStorage.getItem('dsaScore') || 'Not attempted';
-        const interviewScore = localStorage.getItem('interviewScore') || 'Not attempted';
-        const resumeScore = localStorage.getItem('resumeScore') || 'Not scanned';
-
+        const username = account?.username || localStorage.getItem('username') || 'Not available';
         content.innerHTML = `
           <h2>Dashboard</h2>
           <p>Welcome to your dashboard. Here is an overview of your activities and performance.</p>
           <p><strong>Username:</strong> ${username}</p>
-          <div class="performance-grid">
-            <div class="performance-card"><h3>Aptitude</h3><strong>${aptitudeScore}</strong><small>Latest score</small></div>
-            <div class="performance-card"><h3>DSA Practice</h3><strong>${dsaScore}</strong><small>Latest score</small></div>
-            <div class="performance-card"><h3>Mock Interview</h3><strong>${interviewScore}</strong><small>Latest score</small></div>
-            <div class="performance-card"><h3>Resume ATS</h3><strong>${resumeScore}</strong><small>Latest score</small></div>
-          </div>
-          ${performanceMessage || '<p class="performance-note">Complete an activity to see its score here. Scores are saved by each activity when available.</p>'}
+          <p class="performance-note">Loading your latest scores...</p>
         `;
+        if (username === 'Not available') {
+          content.innerHTML += '<p class="performance-note">Unable to identify the signed-in student.</p>';
+          return;
+        }
+        try {
+          const response = await fetch('/api/placement/progress', {
+            headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+            cache: 'no-store'
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || data.message || `Request failed (${response.status})`);
+          const scores = data.scores || {};
+          const scoreText = (item) => {
+            if (!item || item.score === null || item.score === undefined) return 'Not Attempted';
+            return item.maxScore ? `${item.score}/${item.maxScore}` : String(item.score);
+          };
+          const scoreNote = (item) => {
+            if (!item || item.score === null || item.score === undefined) return item?.status === 'PENDING' ? 'Pending' : 'Not Attempted';
+            const percentage = item.percentage === null || item.percentage === undefined ? '' : ` · ${item.percentage}%`;
+            return `${item.status || 'Completed'}${percentage}`;
+          };
+          const dsaDuration = scores.dsa?.durationSeconds == null
+            ? ''
+            : `<small>Duration: ${Math.floor(scores.dsa.durationSeconds / 60)}:${String(scores.dsa.durationSeconds % 60).padStart(2, '0')}</small>`;
+          const overallText = scores.overall?.score == null ? 'Pending' : `${scores.overall.score}%`;
+          content.innerHTML = `
+            <h2>Dashboard</h2>
+            <p>Welcome to your dashboard. Here is an overview of your activities and performance.</p>
+            <p><strong>Username:</strong> ${username}</p>
+            <div class="performance-grid">
+              <div class="performance-card"><h3>Aptitude</h3><strong>${scoreText(scores.aptitude)}</strong><small>${scoreNote(scores.aptitude)}</small></div>
+              <div class="performance-card"><h3>Quick Aptitude</h3><strong>${scoreText(scores.quickAptitude)}</strong><small>${scoreNote(scores.quickAptitude)}</small></div>
+              <div class="performance-card"><h3>DSA Practice</h3><strong>${scoreText(scores.dsa)}</strong><small>${scoreNote(scores.dsa)}</small>${dsaDuration}</div>
+              <div class="performance-card"><h3>AI Interview</h3><strong>${scoreText(scores.interview)}</strong><small>${scoreNote(scores.interview)}</small></div>
+              <div class="performance-card"><h3>Resume ATS</h3><strong>${scoreText(scores.resumeATS)}</strong><small>${scoreNote(scores.resumeATS)}</small></div>
+              <div class="performance-card"><h3>Overall Score</h3><strong>${overallText}</strong><small>${scores.overall?.status || 'Pending'}</small></div>
+            </div>
+            <div id="overallPerformance"></div>
+          `;
+        } catch (error) {
+          console.error('Unable to load student scores:', error);
+          content.innerHTML += `<p class="performance-note">Unable to load scores: ${error.message}</p>`;
+        }
+        loadOverallPerformance();
+      }
+
+      async function loadOverallPerformance() {
+        const section = document.getElementById('overallPerformance');
+        const token = localStorage.getItem('careerconnectToken');
+        if (!section || !token) return;
+        const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[character]));
+        const scoreValue = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
+        const scoreText = (value) => value == null ? 'Not attempted' : `${Number(value).toFixed(0)}%`;
+        const metricCard = (label, value) => {
+          const score = scoreValue(value);
+          return `<div class="overall-card"><h4>${label}</h4><span class="overall-value">${scoreText(score)}</span>${score == null ? '<small class="performance-note">No verified result available</small>' : `<div class="overall-progress" aria-label="${label} progress"><span style="width:${Math.max(0, Math.min(100, score))}%"></span></div>`}</div>`;
+        };
+
+        section.innerHTML = '<section class="overall-section"><h2>Overall Performance</h2><p class="overall-section-intro">Loading your latest verified performance and career eligibility...</p></section>';
+        try {
+          const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json' };
+          const load = (url) => fetch(url, { headers, cache: 'no-store' }).then(async (response) => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || data.message || 'Unable to load performance data.');
+            return data;
+          });
+          const [progress, skills, eligibility] = await Promise.all([
+            load('/api/placement/progress'),
+            load('/api/placement/skills'),
+            load('/api/placement/eligibility')
+          ]);
+          const p = progress.progress || {};
+          const profile = progress.student || {};
+          const metrics = [
+            { label: 'Aptitude', value: scoreValue(p.aptitude?.score), weight: Number(progress.config?.weights?.aptitude || 30) },
+            { label: 'DSA', value: scoreValue(p.dsa?.score), weight: Number(progress.config?.weights?.dsa || 30) },
+            { label: 'Mock Interview', value: scoreValue(p.technicalInterview?.score), weight: Number(progress.config?.weights?.technical || 40) },
+            { label: 'Resume ATS', value: scoreValue(profile.atsScore), weight: 15 },
+            { label: 'Academic Performance', value: scoreValue(profile.cgpa) == null ? null : Math.max(0, Math.min(100, Number(profile.cgpa) * 10)), weight: 10 }
+          ];
+          const available = metrics.filter((metric) => metric.value != null);
+          const readiness = available.length
+            ? Math.round(available.reduce((total, metric) => total + (metric.value * metric.weight), 0) / available.reduce((total, metric) => total + metric.weight, 0))
+            : null;
+          const readinessStatus = readiness == null ? 'Not enough data' : readiness >= 80 ? 'Placement Ready' : readiness >= 60 ? 'Almost Ready' : 'Needs Improvement';
+          const completed = metrics.filter((metric) => metric.value != null).length;
+          const pending = metrics.length - completed;
+          const strong = (skills.strong || []).slice(0, 6);
+          const weak = (skills.weak || []).slice(0, 6);
+          const metricStrong = metrics.filter((metric) => metric.value >= 80);
+          const metricWeak = metrics.filter((metric) => metric.value != null && metric.value < 60);
+          const recommendations = [...weak.map((item) => `Improve ${esc(item.skill)} from ${Number(item.score).toFixed(0)}% through focused practice.`), ...metricWeak.map((item) => `${item.label}: build this score with another guided practice round.`)].slice(0, 4);
+          const eligible = (eligibility.companies || []).filter((company) => company.eligible);
+          const notEligible = (eligibility.companies || []).filter((company) => !company.eligible);
+          const summary = readiness == null
+            ? 'Complete an assessment to receive a personalized career summary.'
+            : `You are currently ${readinessStatus.toLowerCase()} with ${eligible.length} eligible compan${eligible.length === 1 ? 'y' : 'ies'}. ${pending ? `${pending} performance area${pending === 1 ? ' is' : 's are'} still awaiting verified results.` : 'Your tracked assessments are complete.'}`;
+          const skillsMarkup = (items, className) => items.length
+            ? items.map((item) => `<span class="overall-chip ${className}">${esc(item.skill)} · ${Number(item.score).toFixed(0)}%</span>`).join('')
+            : '<span class="performance-note">No verified skill data yet</span>';
+          const companiesMarkup = (items, emptyMessage) => items.length
+            ? items.slice(0, 8).map((company) => `<div class="overall-company"><strong>${esc(company.companyName)} · ${esc(company.role)}</strong><br><small class="performance-note">${company.missingRequirements?.length ? `Missing: ${company.missingRequirements.map(esc).join(', ')}` : 'All configured requirements met.'}</small></div>`).join('')
+            : `<p class="performance-note">${emptyMessage}</p>`;
+          section.innerHTML = `
+            <section class="overall-section">
+              <h2>Overall Performance</h2>
+              <p class="overall-section-intro">A live overview for ${esc(profile.name || profile.id || 'your account')} based on verified assessment and profile data.</p>
+              <div class="overall-grid">${metricCard('Overall Readiness', readiness)}${metrics.map((metric) => metricCard(metric.label, metric.value)).join('')}</div>
+              <div class="overall-subgrid">
+                <div class="overall-panel"><h3>Placement Readiness</h3><p><strong>${readinessStatus}</strong></p><p class="performance-note">${readiness == null ? 'Complete Aptitude, DSA, or Mock Interview to calculate readiness.' : `${readiness}% readiness across ${available.length} available performance areas.`}</p></div>
+                <div class="overall-panel"><h3>Assessment Progress</h3><p><strong>${completed} completed · ${pending} pending</strong></p><p class="performance-note">${p.dsa?.durationSeconds ? `DSA duration: ${Math.floor(Number(p.dsa.durationSeconds) / 60)}m ${Number(p.dsa.durationSeconds) % 60}s.` : 'DSA duration is not available yet.'}</p></div>
+              </div>
+              <div class="overall-subgrid">
+                <div class="overall-panel"><h3>Your Strong Skills</h3><div>${skillsMarkup([...strong, ...metricStrong.map((item) => ({ skill: item.label, score: item.value }))], '')}</div></div>
+                <div class="overall-panel"><h3>Skills That Need Improvement</h3><div>${skillsMarkup([...weak, ...metricWeak.map((item) => ({ skill: item.label, score: item.value }))], 'weak')}</div></div>
+              </div>
+              <div class="overall-subgrid">
+                <div class="overall-panel"><h3>What You Need to Improve</h3>${recommendations.length ? `<ul class="overall-list">${recommendations.map((item) => `<li>${item}</li>`).join('')}</ul>` : '<p class="performance-note">Complete more assessments to receive targeted recommendations.</p>'}</div>
+                <div class="overall-panel"><h3>Education & Academic Profile</h3><ul class="overall-list"><li>Degree: ${esc(profile.course || 'Not available')}</li><li>Branch: ${esc(profile.department || 'Not available')}</li><li>CGPA: ${profile.cgpa == null ? 'Not available' : esc(profile.cgpa)}</li><li>Graduation year: ${esc(profile.graduationYear || 'Not available')}</li><li>Active backlogs: ${profile.activeBacklogs == null ? 'Not available' : esc(profile.activeBacklogs)}</li></ul></div>
+              </div>
+              <div class="overall-subgrid">
+                <div class="overall-panel"><h3>Eligible Companies (${eligible.length})</h3>${companiesMarkup(eligible, 'No company eligibility matches are available yet.')}</div>
+                <div class="overall-panel"><h3>Companies to Work Toward (${notEligible.length})</h3>${companiesMarkup(notEligible, 'No active company requirements are available.')}</div>
+              </div>
+              <div class="overall-panel" style="margin-top:14px"><h3>Your Career Summary</h3><p class="performance-note">${summary}</p></div>
+            </section>
+          `;
+        } catch (error) {
+          console.error('Unable to load overall performance:', error);
+          section.innerHTML = '<section class="overall-section"><h2>Overall Performance</h2><p class="performance-note">Verified performance is temporarily unavailable. Existing dashboard modules remain available.</p></section>';
+        }
+      }
+
+      const placementToken = localStorage.getItem('careerconnectToken');
+      const placementHeaders = {
+        Authorization: `Bearer ${placementToken}`,
+        Accept: 'application/json'
+      };
+      const escapePlacementValue = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[character]));
+      const placementTitle = (value) => String(value || '').replaceAll('_', ' ');
+      const placementBadge = (status) => {
+        const normalized = String(status || 'UNKNOWN').toLowerCase();
+        return `<span class="placement-pill ${normalized}">${escapePlacementValue(placementTitle(status))}</span>`;
+      };
+      const placementRoundClass = (status) => String(status || '').toLowerCase().replace('_', '-');
+
+      async function showPlacementReadiness() {
+        content.innerHTML = '<h2>Placement Readiness</h2><p class="performance-note">Loading verified placement progress...</p>';
+        if (!placementToken) {
+          content.innerHTML = '<h2>Placement Readiness</h2><p class="performance-note">Please sign in again to view verified placement progress.</p>';
+          return;
+        }
+
+        try {
+          const urls = ['/api/placement/progress', '/api/placement/skills', '/api/placement/eligibility'];
+          const responses = await Promise.all(urls.map((url) => fetch(url, {
+            headers: placementHeaders,
+            cache: 'no-store'
+          }).then(async (response) => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || data.message || 'Request failed');
+            return data;
+          })));
+          const [progress, skills, eligibility] = responses;
+          const rounds = [
+            ['Aptitude', progress.progress.aptitude, progress.config.aptitudeMinScore],
+            ['DSA Practice', progress.progress.dsa, progress.config.dsaMinScore],
+            ['Technical Interview', progress.progress.technicalInterview, progress.config.technicalMinScore]
+          ];
+          const roundMarkup = rounds.map(([name, round, minimum]) => {
+            const duration = name === 'DSA Practice'
+              ? `<p class="performance-note">Server-verified duration: ${Math.floor(Number(round.durationSeconds || 0) / 60)}m ${Number(round.durationSeconds || 0) % 60}s / 5m minimum</p>`
+              : '';
+            return `<div class="placement-round-card ${placementRoundClass(round.status)}"><h4>${name}</h4>${placementBadge(round.status)}<div class="placement-round-score">${round.score == null ? '—' : `${Number(round.score).toFixed(2)}/100`}</div><div class="placement-muted">Minimum: ${minimum}/100</div>${duration}</div>`;
+          }).join('');
+          const strongSkills = skills.strong.length
+            ? skills.strong.map((skill) => `<span class="placement-pill available">${escapePlacementValue(skill.skill)} · ${skill.score}%</span>`).join('')
+            : '<p class="performance-note">Insufficient data</p>';
+          const weakSkills = skills.weak.length
+            ? skills.weak.map((skill) => `<span class="placement-pill locked">${escapePlacementValue(skill.skill)} · ${skill.score}%</span>`).join('')
+            : '<p class="performance-note">Insufficient data</p>';
+          const companies = eligibility.companies.length
+            ? eligibility.companies.map((company) => `<div class="placement-company-card"><div><h4>${escapePlacementValue(company.companyName)} · ${escapePlacementValue(company.role)}</h4>${company.eligible ? placementBadge('QUALIFIED') : placementBadge('NOT_QUALIFIED')}<p class="placement-muted">${company.missingRequirements.length ? `Missing: ${company.missingRequirements.map(escapePlacementValue).join(', ')}` : 'All configured requirements met.'}</p></div><div class="placement-muted"><strong>Matching skills</strong><br>${company.matchingSkills.length ? company.matchingSkills.map(escapePlacementValue).join(', ') : 'None'}</div></div>`).join('')
+            : '<p class="performance-note">No active company drives configured.</p>';
+          content.innerHTML = `
+            <div class="placement-hero">
+              <div><h2>Placement Readiness</h2><p>${escapePlacementValue(progress.student?.name || progress.student?.id || 'Student')} · ${escapePlacementValue(progress.student?.department || 'Department not set')}</p></div>
+              <div class="placement-hero-score"><strong>${progress.overall.score == null ? '—' : `${progress.overall.score}/100`}</strong><small>Overall score</small></div>
+            </div>
+            <div class="placement-summary-grid placement-section">
+              <div class="placement-summary-card"><span>Current round</span><strong>${escapePlacementValue(placementTitle(progress.currentRound))}</strong><small>Server-verified workflow status</small></div>
+              <div class="placement-summary-card"><span>Profile</span><strong>${progress.student ? 'Available' : 'Incomplete'}</strong><small>Profile data from your account</small></div>
+              <div class="placement-summary-card"><span>Readiness status</span><strong>${placementTitle(progress.overall.status)}</strong><small>Based on completed qualification rounds</small></div>
+            </div>
+            <section class="placement-section"><h3>Qualification Pipeline</h3><p class="placement-muted">Complete each server-verified round to unlock the next stage.</p><div class="placement-round-grid">${roundMarkup}</div></section>
+            <section class="placement-section"><div class="placement-summary-grid"><div class="placement-skill-group"><h4>Strong skills</h4><div class="placement-skill-list">${strongSkills}</div></div><div class="placement-skill-group"><h4>Needs improvement</h4><div class="placement-skill-list">${weakSkills}</div></div></div></section>
+            <section class="placement-section"><h3>Company Eligibility</h3><p class="placement-muted">Eligibility is calculated from your verified profile and assessment results.</p><div class="placement-card">${companies}</div></section>
+          `;
+        } catch (error) {
+          console.error('Unable to load placement readiness:', error);
+          content.innerHTML = `<h2>Placement Readiness</h2><p class="performance-note">Placement progress could not be loaded: ${escapePlacementValue(error.message)}</p>`;
+        }
       }
 
       // Dashboard Section
@@ -276,7 +911,12 @@
         event.preventDefault();
         showDashboard();
       });
-      showDashboard();
+      resetTestDataIfRequested()
+        .then(showDashboard)
+        .catch((error) => {
+          console.error(error);
+          showDashboard();
+        });
 
       // Aptitude Section with two inner buttons
       document.getElementById('aptitude').addEventListener('click', function (event) {
@@ -287,22 +927,23 @@
             <button id="dashboardButton" class="btn">Result Analysis & Visualization</button>
           `;
         document.getElementById('quizButton').addEventListener('click', function () {
-          window.location.href = 'http://localhost:8501';
+          window.location.href = '/aptitude/';
         });
         document.getElementById('dashboardButton').addEventListener('click', function () {
-          window.location.href = 'http://localhost:8502';
+          window.location.href = '/aptitude-dashboard/';
         });
       });
 
-      // MOckinterview
+      // Mock Interview Section with an explicit start action.
       document.getElementById('Mockinterview').addEventListener('click', function (event) {
         event.preventDefault();
         content.innerHTML = `
-            <h2>Mock Interview</h2>
-            <button id="interButton" class="btn">Start Interview</button>
-            `;
-        document.getElementById('interButton').addEventListener('click', function () {
-          window.location.href = 'interview.html';
+            <h2>Technical Interview Options</h2>
+            <p>Start your AI-powered technical mock interview when you are ready.</p>
+            <button id="startMockInterviewButton" class="btn">Start Mock Interview</button>
+          `;
+        document.getElementById('startMockInterviewButton').addEventListener('click', function () {
+          window.location.href = '/mockinterview/';
         });
       });
 
@@ -329,7 +970,7 @@
             <div class="row">
               <div class="button-container">
                 <button type="button" class="btn">
-                  <a href="http://localhost:8506">Start ATS Scan</a>
+                  <a href="/resumeats/">Start ATS Scan</a>
                 </button>
               </div>
             </div>
@@ -337,31 +978,106 @@
       });
 
       // Announcements Section with fetch request
-      document.getElementById('announcements').addEventListener('click', function () {
+      document.getElementById('notifications').addEventListener('click', async function () {
+        content.innerHTML = '<h2>Notifications</h2><p>Loading notifications...</p>';
+        const token = localStorage.getItem('careerconnectToken');
+        if (!token) return;
+        try {
+          const response = await fetch('/api/notifications', { headers: { Authorization: `Bearer ${token}` } });
+          const data = await response.json();
+          const esc = (value) => String(value || '').replace(/[&<>"']/g, character => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[character]));
+          content.innerHTML = `<h2>Notifications</h2><button id="markAllRead">Mark all as read</button>` +
+            ((data.notifications || []).map(notification => `<article class="announcement" style="${notification.readAt ? '' : 'border-left:4px solid #4CAF50'}">
+              <h3>${esc(notification.title)}</h3><p>${esc(notification.content)}</p>
+              <small>${new Date(notification.createdAt).toLocaleString()} ${notification.readAt ? '' : ' • unread'}</small>
+              ${notification.readAt ? '' : `<button onclick="markNotificationRead('${notification._id}')">Mark read</button>`}</article>`).join('') || '<p>No notifications.</p>');
+          document.getElementById('markAllRead').onclick = async () => {
+            await fetch('/api/notifications/read-all', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+            document.getElementById('notifications').click();
+          };
+        } catch (error) { content.innerHTML = '<h2>Notifications</h2><p>Unable to load notifications.</p>'; }
+      });
+
+      window.markNotificationRead = async function (id) {
+        const token = localStorage.getItem('careerconnectToken');
+        await fetch(`/api/notifications/${id}/read`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+        document.getElementById('notifications').click();
+      };
+
+      async function refreshNotificationBadge() {
+        const token = localStorage.getItem('careerconnectToken');
+        if (!token) return;
+        const response = await fetch('/api/notifications?limit=1', { headers: { Authorization: `Bearer ${token}` } });
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('notificationBadge').textContent = data.unreadCount ? `(${data.unreadCount})` : '';
+        }
+      }
+      refreshNotificationBadge();
+      setInterval(refreshNotificationBadge, 60000);
+
+      async function showApplications() {
+        const token = localStorage.getItem('careerconnectToken');
+        content.innerHTML = '<h2>My Applications</h2><p>Loading applications...</p>';
+        if (!token) return;
+        try {
+          const response = await fetch('/api/student/applications', { headers: { Authorization: `Bearer ${token}` } });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Unable to load applications.');
+          const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character]));
+          content.innerHTML = `<h2>My Applications</h2>` + ((data.applications || []).map((application) => {
+            const job = application.announcementId || {};
+            return `<article class="placement-card"><h3>${esc(application.role)}</h3><p>${esc(application.companyName)}</p><p>Applied: ${new Date(application.appliedAt).toLocaleDateString()}</p><p>Status: <strong>${esc(application.status)}</strong></p><p>Deadline: ${job.applicationDeadline ? new Date(job.applicationDeadline).toLocaleDateString() : 'Not specified'}</p></article>`;
+          }).join('') || '<p class="performance-note">You have not applied for any opportunities yet.</p>');
+        } catch (error) {
+          content.innerHTML = `<h2>My Applications</h2><p class="performance-note">${error.message}</p>`;
+        }
+      }
+
+      document.getElementById('applications').addEventListener('click', function (event) {
+        event.preventDefault();
+        showApplications();
+      });
+
+      document.getElementById('announcements').addEventListener('click', async function (event) {
+        event.preventDefault();
         content.innerHTML = '<h2>Announcements</h2><p>Loading announcements...</p>';
-        fetch('http://localhost:3000/announcements')
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.length > 0) {
-              let announcementsHtml = '';
-              data.forEach((announcement) => {
-                announcementsHtml += `
-                    <div class="announcement">
-                      <h3>${announcement.title}</h3>
-                      <p>${announcement.content}</p>
-                      <p><small>Published on: ${new Date(announcement.createdAt).toLocaleString()}</small></p>
-                    </div>
-                    <hr/>
-                  `;
-              });
-              content.innerHTML = `<h2>Announcements</h2>${announcementsHtml}`;
-            } else {
-              content.innerHTML = '<h2>Announcements</h2><p>No announcements available.</p>';
-            }
-          })
-          .catch((error) => {
-            content.innerHTML = '<h2>Announcements</h2><p>Failed to load announcements. Please try again later.</p>';
+        const token = localStorage.getItem('careerconnectToken');
+        try {
+          const [announcementResponse, applicationsResponse] = await Promise.all([
+            fetch('/announcements', { headers: { Authorization: `Bearer ${token}` } }),
+            fetch('/api/student/applications', { headers: { Authorization: `Bearer ${token}` } })
+          ]);
+          const announcements = await announcementResponse.json();
+          const applicationData = await applicationsResponse.json();
+          const appliedIds = new Set((applicationData.applications || []).map((application) => String(application.announcementId?._id || application.announcementId)));
+          const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character]));
+          content.innerHTML = `<h2>Announcements</h2>` + ((announcements || []).map((announcement) => {
+            const isJob = announcement.type === 'job';
+            const closed = isJob && announcement.applicationDeadline && new Date(announcement.applicationDeadline) < new Date();
+            const applied = appliedIds.has(String(announcement._id));
+            const action = isJob
+              ? `<div class="application-card"><p><strong>${closed ? 'Application closed' : applied ? '✓ Application submitted' : 'Placement opportunity'}</strong></p>${announcement.applicationDeadline ? `<p>Deadline: ${new Date(announcement.applicationDeadline).toLocaleString()}</p>` : ''}${closed ? '<button disabled>APPLICATION CLOSED</button>' : applied ? '<button disabled>APPLIED</button>' : `<button data-apply-id="${announcement._id}">APPLY NOW</button>`}</div>`
+              : '';
+            return `<article class="announcement"><h3>${esc(announcement.type === 'job' ? (announcement.jobTitle || announcement.title) : announcement.title)}</h3>${isJob ? `<p><strong>${esc(announcement.companyName)}</strong></p>` : ''}<p>${esc(announcement.content)}</p><p><small>Published on: ${new Date(announcement.createdAt).toLocaleString()}</small></p>${action}</article>`;
+          }).join('') || '<p>No announcements available.</p>');
+          content.querySelectorAll('[data-apply-id]').forEach((button) => {
+            button.addEventListener('click', async () => {
+              button.disabled = true;
+              const response = await fetch(`/api/announcements/${button.dataset.applyId}/apply`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+              const result = await response.json();
+              if (!response.ok) {
+                button.disabled = false;
+                alert(result.error || 'Unable to submit the application.');
+                return;
+              }
+              alert('Application submitted successfully.');
+              showApplications();
+            });
           });
+        } catch (error) {
+          content.innerHTML = '<h2>Announcements</h2><p>Failed to load announcements. Please try again later.</p>';
+        }
       });
 
       // Profile Section
@@ -373,7 +1089,7 @@
             <form id="profileForm">
               <div class="form-group">
                 <label for="fullNameInput">Full Name</label>
-                <input type="text" id="fullNameInput" value="${storedFullName}" />
+                <input type="text" id="fullNameInput" value="${storedFullName}" readonly />
               </div>
               <div class="form-group">
                 <label for="emailInput">Email</label>
@@ -390,15 +1106,12 @@
           `;
         document.getElementById('profileForm').addEventListener('submit', function (event) {
           event.preventDefault();
-          const newFullName = document.getElementById('fullNameInput').value;
           const newEmail = document.getElementById('emailInput').value;
           const newPassword = document.getElementById('passwordInput').value;
-          localStorage.setItem('fullName', newFullName);
           localStorage.setItem('email', newEmail);
           if (newPassword) {
             localStorage.setItem('password', newPassword);
           }
-          document.getElementById('fullName').textContent = newFullName;
           content.innerHTML = '<p>Your profile has been updated successfully!</p>';
         });
       });
@@ -418,10 +1131,10 @@
             <button id="dsaAnalysisButton" class="btn">DSA Analysis</button>
           `;
         document.getElementById('dsaQuestionsButton').addEventListener('click', function () {
-          window.location.href = 'http://localhost:8503';
+          window.location.href = '/dsa/';
         });
         document.getElementById('dsaAnalysisButton').addEventListener('click', function () {
-          window.location.href = 'http://localhost:8504';
+          window.location.href = '/dsa-dashboard/';
         });
       });
     });

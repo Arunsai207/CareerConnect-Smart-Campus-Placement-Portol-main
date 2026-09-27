@@ -97,6 +97,18 @@
             color: #007bff;
             text-decoration: underline;
         }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
     </style>
 </head>
 
@@ -104,8 +116,10 @@
     <div class="form-container" id="loginFormContainer">
         <h2>Student Login</h2>
         <form id="studentLoginForm" onsubmit="validateLoginForm(event)">
-            <input type="text" id="loginUsername" placeholder="Username" required>
-            <input type="password" id="loginPassword" placeholder="Password" required>
+            <label class="sr-only" for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" name="username" placeholder="Username" autocomplete="username" required>
+            <label class="sr-only" for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" name="password" placeholder="Password" autocomplete="current-password" required>
             <div class="error-message" id="loginErrorMessage">Invalid username or password.</div>
             <button type="submit">Login</button>
         </form>
@@ -119,14 +133,25 @@
     <div class="form-container" id="registerFormContainer" style="display:none;">
         <h2>Student Register</h2>
         <form id="studentRegisterForm" onsubmit="validateRegisterForm(event)">
-            <input type="text" id="name" placeholder="Full Name" required>
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="tel" id="phone" placeholder="Phone Number" required>
-            <input type="date" id="dob" placeholder="Date of Birth" required>
-            <input type="text" id="college" placeholder="College Name" required>
+            <label class="sr-only" for="name">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="Full Name" autocomplete="name" required>
+            <label class="sr-only" for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Email" autocomplete="email" required>
+            <button type="button" id="sendOtpButton" onclick="sendRegistrationOtp()">Send Email OTP</button>
+            <label class="sr-only" for="otp">Email verification code</label>
+            <input type="text" id="otp" placeholder="Six-digit OTP" inputmode="numeric" maxlength="6" autocomplete="one-time-code" disabled>
+            <button type="button" id="verifyOtpButton" onclick="verifyRegistrationOtp()" disabled>Verify OTP</button>
+            <div id="otpStatus" style="text-align:center;margin-bottom:15px;" aria-live="polite"></div>
+            <label class="sr-only" for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="Phone Number" autocomplete="tel" required>
+            <label class="sr-only" for="dob">Date of Birth</label>
+            <input type="date" id="dob" name="bday" placeholder="Date of Birth" autocomplete="bday" required>
+            <label class="sr-only" for="college">College Name</label>
+            <input type="text" id="college" name="organization" placeholder="College Name" autocomplete="organization" required>
 
             <!-- Department Dropdown -->
-            <select id="department" required>
+            <label class="sr-only" for="department">Department</label>
+            <select id="department" name="department" required>
                 <option value="">Select Department</option>
                 <option value="COMPS">COMPS</option>
                 <option value="MECH">MECH</option>
@@ -141,18 +166,20 @@
             <div class="gender-container">
                 <div>
                     <input type="radio" id="male" name="gender" value="Male" required>
-                    <label for="Male">Male</label>
+                    <label for="male">Male</label>
                 </div>
                 <div>
                     <input type="radio" id="female" name="gender" value="Female" required>
-                    <label for="Female">Female</label>
+                    <label for="female">Female</label>
                 </div>
             </div>
 
-            <input type="text" id="registerUsername" placeholder="Username" required>
-            <input type="password" id="registerPassword" placeholder="Password" required>
+            <label class="sr-only" for="registerUsername">Username</label>
+            <input type="text" id="registerUsername" name="new-username" placeholder="Username" autocomplete="username" required>
+            <label class="sr-only" for="registerPassword">Password</label>
+            <input type="password" id="registerPassword" name="new-password" placeholder="Password" autocomplete="new-password" required>
             <div class="error-message" id="registerErrorMessage">Please fill out all fields.</div>
-            <button type="submit">Register</button>
+            <button type="submit" id="registerButton" disabled>Register</button>
         </form>
         <p style="text-align:center;">Already have an account? <button class="toggle-btn" onclick="toggleForms()">Login here</button></p>
         
@@ -178,7 +205,7 @@
 
         function validateLoginForm(event) {
             event.preventDefault(); 
-            var username = document.getElementById('loginUsername').value;
+            var username = document.getElementById('loginUsername').value.trim();
             var password = document.getElementById('loginPassword').value;
         
             fetch('http://localhost:3000/login', {
@@ -191,11 +218,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message === 'Login successful') {
+                    ['fullName', 'username', 'email', 'aptitudeScore', 'dsaScore', 'interviewScore', 'resumeScore'].forEach(function (key) {
+                        localStorage.removeItem(key);
+                    });
+                    if (data.token) localStorage.setItem('careerconnectToken', data.token);
                     // Save user info so dashboard can display the correct name
                     try {
                         // If server returns a user object, prefer that
                         if (data.user) {
-                            localStorage.setItem('fullName', data.user.name || data.user.fullName || username);
+                            localStorage.setItem('fullName', data.user.name || username);
                             if (data.user.email) localStorage.setItem('email', data.user.email);
                             localStorage.setItem('username', data.user.username || username);
                         } else if (data.name) {
@@ -226,34 +257,112 @@
             });
         }
         
-        function validateRegisterForm(event) {
-            event.preventDefault(); // Prevent the default form submission
-            var name = document.getElementById('name').value;
-            var email = document.getElementById('email').value;
-            var phone = document.getElementById('phone').value;
-            var dob = document.getElementById('dob').value;
-            var college = document.getElementById('college').value;
-            var department = document.getElementById('department').value;
-            var gender = document.querySelector('input[name="gender"]:checked')?.value;
-            var username = document.getElementById('registerUsername').value;
-            var password = document.getElementById('registerPassword').value;
+        var registrationToken = null;
 
-            if (name && email && phone && dob && college && department && gender && username && password) {
-                fetch('http://localhost:3000/register', {
+        function registrationDetails() {
+            return {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                dob: document.getElementById('dob').value,
+                college: document.getElementById('college').value.trim(),
+                department: document.getElementById('department').value,
+                gender: document.querySelector('input[name="gender"]:checked')?.value,
+                username: document.getElementById('registerUsername').value.trim(),
+                password: document.getElementById('registerPassword').value
+            };
+        }
+
+        function setOtpStatus(message, isError) {
+            var status = document.getElementById('otpStatus');
+            status.innerText = message;
+            status.style.color = isError ? 'red' : 'green';
+        }
+
+        function updateRegisterButton() {
+            document.getElementById('registerButton').disabled = !registrationToken;
+        }
+
+        async function sendRegistrationOtp() {
+            var details = registrationDetails();
+            if (!details.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email)) {
+                setOtpStatus('Please enter a valid email address.', true);
+                return;
+            }
+
+            var missingField = ['name', 'phone', 'dob', 'college', 'department', 'gender', 'username', 'password']
+                .find(function (field) { return !String(details[field] || '').trim(); });
+            if (missingField) {
+                setOtpStatus('Please complete all registration fields before requesting an OTP.', true);
+                return;
+            }
+
+            try {
+                var response = await fetch('/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(details)
+                });
+                var data = await response.json();
+                if (!response.ok) {
+                    setOtpStatus(data.message || 'Unable to send OTP.', true);
+                    return;
+                }
+                document.getElementById('otp').disabled = false;
+                document.getElementById('verifyOtpButton').disabled = false;
+                setOtpStatus('OTP sent successfully to your registered email address. It expires in 5 minutes.', false);
+            } catch (error) {
+                setOtpStatus('Email delivery failed. Please try again later.', true);
+            }
+        }
+
+        async function verifyRegistrationOtp() {
+            var email = document.getElementById('email').value.trim();
+            var otp = document.getElementById('otp').value.trim();
+            try {
+                var response = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, otp: otp })
+                });
+                var data = await response.json();
+                if (!response.ok) {
+                    setOtpStatus(data.message || 'Invalid OTP. Please try again.', true);
+                    return;
+                }
+                registrationToken = data.registrationToken;
+                document.getElementById('email').readOnly = true;
+                document.getElementById('otp').disabled = true;
+                document.getElementById('verifyOtpButton').disabled = true;
+                document.getElementById('sendOtpButton').disabled = true;
+                setOtpStatus('Email verified successfully. You can now complete your registration.', false);
+                updateRegisterButton();
+            } catch (error) {
+                setOtpStatus('Unable to verify the OTP right now. Please try again.', true);
+            }
+        }
+
+        async function validateRegisterForm(event) {
+            event.preventDefault(); // Prevent the default form submission
+            var details = registrationDetails();
+
+            if (registrationToken) {
+                fetch('/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name, email, phone, dob, college, department, gender, username, password }),
+                    body: JSON.stringify({
+                        registrationToken
+                    }),
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message === 'Registration successful') {
-                        alert(data.message); // Display success message from server
+                .then(async response => {
+                    var data = await response.json();
+                    if (response.ok) {
+                        alert(data.message);
                         toggleForms(); // Switch to login form after registration
                     } else {
-                        document.getElementById('registerErrorMessage').style.display = 'block';
-                        document.getElementById('registerErrorMessage').innerText = data.message;
+                        setOtpStatus(data.message || 'Registration failed.', true);
                     }
                 })
                 .catch(error => {
@@ -262,6 +371,7 @@
                 });
             } else {
                 document.getElementById('registerErrorMessage').style.display = 'block';
+                document.getElementById('registerErrorMessage').innerText = 'Please verify your email before registering.';
             }
         }
     </script>

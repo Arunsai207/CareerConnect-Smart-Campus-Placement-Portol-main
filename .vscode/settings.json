@@ -1,0 +1,9 @@
+{
+  "python.defaultInterpreterPath": "C:\\Users\\mikki\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/Aptitude",
+    "${workspaceFolder}/MockInter",
+    "${workspaceFolder}/ResumeATS"
+  ]
+}

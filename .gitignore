@@ -8,3 +8,4 @@ __pycache__/
 ResumeATS/poppler-25.07.0/
 ResumeATS/results.html
 .vs/
+.env
