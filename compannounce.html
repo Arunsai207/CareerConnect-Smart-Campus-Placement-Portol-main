@@ -186,7 +186,7 @@
         // Fetch announcements from the server
         async function fetchAnnouncements() {
             try {
-                const response = await fetch('http://localhost:3000/announcements');
+                const response = await fetch('/announcements');
                 const data = await response.json();
 
                 // Get the announcements container
@@ -220,7 +220,7 @@
 
             if (confirmation) {
                 try {
-                    const response = await fetch(`http://localhost:3000/announcements/${id}`, {
+                    const response = await fetch(`/announcements/${id}`, {
                         method: 'DELETE'
                     });
 

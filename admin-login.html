@@ -156,7 +156,7 @@
                 payload = { name, position, email, phone, username, password };
             }
 
-            const url = isLogin ? 'http://localhost:3000/admin/login' : 'http://localhost:3000/admin/register';
+            const url = isLogin ? '/admin/login' : '/admin/register';
 
             const response = await fetch(url, {
                 method: 'POST',

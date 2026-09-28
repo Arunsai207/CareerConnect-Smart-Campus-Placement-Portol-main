@@ -129,7 +129,7 @@ async function fetchProfile() {
     if (!studentData) return;
 
     try {
-        const response = await fetch(`http://localhost:3000/student/profile?username=${studentData.username}`);
+        const response = await fetch(`/student/profile?username=${studentData.username}`);
         if (!response.ok) throw new Error("Failed to fetch profile");
 
         const profileData = await response.json();
@@ -180,7 +180,7 @@ async function saveProfile() {
     };
 
     try {
-        const response = await fetch('http://localhost:3000/student/update', {
+        const response = await fetch('/student/update', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatedProfile)

@@ -109,7 +109,7 @@
                 payload = { companyName, email, companyAddress, phone, username, password };
             }
 
-            const url = isLogin ? 'http://localhost:3000/company/login' : 'http://localhost:3000/company/register';
+            const url = isLogin ? '/company/login' : '/company/register';
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

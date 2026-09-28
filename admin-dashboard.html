@@ -368,7 +368,7 @@
         // Function to fetch and display the number of students
         async function fetchStudentCount() {
             try {
-                const response = await fetch('http://localhost:3000/students/count');
+                const response = await fetch('/students/count');
                 const data = await response.json();
                 
                 if (response.ok) {
@@ -473,7 +473,7 @@
             const phone = document.getElementById('editPhone').value;
             const department = document.getElementById('editDepartment').value;
             try {
-                const response = await fetch(`http://localhost:3000/students/${currentStudentUsername}`, {
+                const response = await fetch(`/students/${currentStudentUsername}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -498,7 +498,7 @@
             const confirmDelete = confirm('Are you sure you want to delete this student?');
             if (confirmDelete) {
                 try {
-                    const response = await fetch(`http://localhost:3000/students/${username}`, {
+                    const response = await fetch(`/students/${username}`, {
                         method: 'DELETE',
                     });
 

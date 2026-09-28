@@ -360,7 +360,7 @@
 
         async function fetchStudentCount() {
             try {
-                const response = await fetch('http://localhost:3000/students/count');
+                const response = await fetch('/students/count');
                 const data = await response.json();
                 document.getElementById('student-count').textContent = data.count;
             } catch (error) {
@@ -371,7 +371,7 @@
 
         async function fetchStudents() {
             try {
-                const response = await fetch('http://localhost:3000/students');
+                const response = await fetch('/students');
                 const data = await response.json();
                 students = data;
                 renderStudents(students);

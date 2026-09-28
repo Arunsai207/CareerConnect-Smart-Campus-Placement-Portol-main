@@ -181,7 +181,7 @@
             };
 
             try {
-                const response = await fetch('http://localhost:3000/admin/update', {
+                const response = await fetch('/admin/update', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('careerconnectToken')}` },
                     body: JSON.stringify(updatedProfile)
