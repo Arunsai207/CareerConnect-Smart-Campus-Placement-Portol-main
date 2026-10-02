@@ -2286,7 +2286,9 @@ app.post('/company/announcements', async (req, res) => {
     */
 });
 
-const server = app.listen(port, () => {
+let server;
+if (require.main === module) {
+server = app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });
 
@@ -2317,3 +2319,6 @@ server.on('upgrade', (req, socket, head) => {
         socket.destroy();
     }
 });
+}
+
+module.exports = app;
