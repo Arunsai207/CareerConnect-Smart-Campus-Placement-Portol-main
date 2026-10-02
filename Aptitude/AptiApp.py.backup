@@ -178,7 +178,7 @@ class VideoTransformer(VideoTransformerBase):
 # MongoDB Connection and Logging
 # ---------------------------
 def db_connect():
-    client = pymongo.MongoClient(os.getenv("MONGODB_URI", "mongodb://localhost:27017/"))
+    client = pymongo.MongoClient("mongodb://localhost:27017/")
     return client['quiz_system']
 
 

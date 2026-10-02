@@ -27,14 +27,14 @@ if GEMINI_API_KEY:
 # ---------------------------
 # MongoDB Connection (for interview feedback and face logs)
 # ---------------------------
-client = MongoClient(os.getenv("MONGODB_URI", "mongodb://localhost:27017/"))
+client = MongoClient("mongodb://localhost:27017/")
 db = client["mock_interviews"]
 feedback_collection = db["feedbacks"]
 
 def technical_is_unlocked(student_id):
     """Enforce the server-maintained DSA qualification before an interview starts."""
     try:
-        client = MongoClient(os.getenv("MONGODB_URI", "mongodb://localhost:27017/"), serverSelectionTimeoutMS=2000)
+        client = MongoClient("mongodb://localhost:27017/", serverSelectionTimeoutMS=2000)
         student_db = client["studentDB"]
         progress = student_db["placementprogresses"].find_one(
             {"studentId": student_id},

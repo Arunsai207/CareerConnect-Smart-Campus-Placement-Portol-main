@@ -16,7 +16,7 @@ from streamlit_ace import st_ace
 # ==========================================
 # Use a 2-second server selection timeout to prevent app hanging if MongoDB is offline
 try:
-    client = MongoClient(os.getenv('MONGODB_URI', 'mongodb://localhost:27017/'), serverSelectionTimeoutMS=2000)
+    client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
     db = client['DSA_code_app_db']
     collection = db['submissions']
 except Exception:
@@ -568,7 +568,7 @@ username = st.text_input("Enter your username", autocomplete="username")
 def dsa_is_unlocked(student_id):
     """Prevent direct DSA access before the central placement workflow unlocks it."""
     try:
-        client = MongoClient(os.getenv('MONGODB_URI', 'mongodb://localhost:27017/'), serverSelectionTimeoutMS=2000)
+        client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
         student_db = client['studentDB']
         progress = student_db['placementprogresses'].find_one({"studentId": student_id}, {"aptitude.status": 1})
         if progress and progress.get("aptitude", {}).get("status") == "QUALIFIED":
@@ -591,7 +591,7 @@ def dsa_is_unlocked(student_id):
 
 def start_dsa_session(student_id):
     """Create one persisted DSA session and resume it without resetting the deadline."""
-    client = MongoClient(os.getenv('MONGODB_URI', 'mongodb://localhost:27017/'), serverSelectionTimeoutMS=2000)
+    client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
     progress = client['studentDB']['placementprogresses']
     current = progress.find_one({"studentId": student_id}, {"dsa": 1})
     dsa = (current or {}).get("dsa", {})
@@ -624,7 +624,7 @@ def start_dsa_session(student_id):
 
 def finalize_dsa_session(student_id, submission_type):
     """Finalize once using the persisted server deadline; repeated calls are idempotent."""
-    client = MongoClient(os.getenv('MONGODB_URI', 'mongodb://localhost:27017/'), serverSelectionTimeoutMS=2000)
+    client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
     progress = client['studentDB']['placementprogresses']
     session = progress.find_one({"studentId": student_id}, {"dsa": 1})
     dsa = (session or {}).get("dsa", {})

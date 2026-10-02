@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -9,7 +8,7 @@ import numpy as np
 
 # Connect to the MongoDB database
 def db_connect():
-    client = MongoClient(os.getenv("MONGODB_URI", "mongodb://localhost:27017/"))
+    client = MongoClient("mongodb://localhost:27017/")
     return client['quiz_system']
 
 
