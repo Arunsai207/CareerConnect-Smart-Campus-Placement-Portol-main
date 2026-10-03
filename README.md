@@ -877,7 +877,7 @@ The platform helps students:
 
 ### 🔔 Notifications
 
-* Email notifications through otps while login 
+* Email notifications for placement events
 * Assessment reminders
 * Interview reminders
 * Placement alerts

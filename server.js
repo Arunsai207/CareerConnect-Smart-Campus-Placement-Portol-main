@@ -14,15 +14,10 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const { spawn } = require('child_process');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const app = express();
 const port = process.env.PORT || 3000; // Public port for unified access
 const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/studentDB';
-const OTP_EXPIRY_MS = 5 * 60 * 1000;
-const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
-const OTP_MAX_ATTEMPTS = 5;
-const OTP_MAX_REQUESTS = 5;
 
 // Middleware
 app.use(bodyParser.json({ limit: '10mb' }));
@@ -651,42 +646,6 @@ const notificationSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now, index: true }
 });
 const Notification = mongoose.model('Notification', notificationSchema);
-
-const otpSchema = new mongoose.Schema({
-    username: { type: String, required: true, index: true },
-    codeHash: { type: String, required: true },
-    expiresAt: { type: Date, required: true, index: true },
-    attempts: { type: Number, default: 0 },
-    consumedAt: Date,
-    createdAt: { type: Date, default: Date.now }
-});
-otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-const LoginOtp = mongoose.model('LoginOtp', otpSchema);
-
-const registrationOtpSchema = new mongoose.Schema({
-    email: { type: String, required: true, index: true },
-    registrationTokenHash: { type: String, required: true, unique: true, index: true },
-    otpHash: { type: String, required: true },
-    registrationData: {
-        name: String,
-        email: String,
-        phone: String,
-        dob: Date,
-        college: String,
-        department: String,
-        gender: String,
-        username: String,
-        passwordHash: String
-    },
-    verificationAttempts: { type: Number, default: 0 },
-    requestCount: { type: Number, default: 1 },
-    resendAt: { type: Date, required: true },
-    expiresAt: { type: Date, required: true, index: true },
-    verifiedAt: { type: Date, default: null },
-    createdAt: { type: Date, default: Date.now }
-});
-registrationOtpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-const RegistrationOtp = mongoose.model('RegistrationOtp', registrationOtpSchema);
 
 const reminderSchema = new mongoose.Schema({
     title: { type: String, required: true },
@@ -1700,10 +1659,6 @@ function normalizeEmail(value) {
     return String(value || '').trim().toLowerCase();
 }
 
-function hashSecret(value) {
-    return crypto.createHash('sha256').update(value).digest('hex');
-}
-
 function getMailTransporter() {
     const SMTP_HOST = String(process.env.SMTP_HOST || '').trim();
     const SMTP_PORT = String(process.env.SMTP_PORT || '').trim();
@@ -1724,211 +1679,45 @@ function getMailTransporter() {
     });
 }
 
-function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-function buildOtpEmail(otp, recipientName) {
-    const safeName = escapeHtml(recipientName || 'Student');
-    return {
-        subject: 'CareerConnect — Email Verification OTP',
-        text: `Dear ${recipientName || 'Student'},\n\nWelcome to CareerConnect!\n\nTo complete your registration, use this verification code: ${otp}\n\nThis OTP is valid for 5 minutes.\n\nFor your security, do not share this OTP with anyone. CareerConnect will never ask for your OTP through an unofficial channel. If you did not request this verification, you may safely ignore this email.\n\nRegards,\nCareerConnect Placement Team\nCareerConnect — AI-Powered Campus Placement Platform`,
-        html: `<!doctype html>
-<html><body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#203040;">
-<div style="max-width:560px;margin:24px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 18px rgba(20,40,70,.12);">
-  <div style="background:#007bff;color:#fff;padding:24px;text-align:center;">
-    <div style="font-size:26px;font-weight:700;">CareerConnect</div>
-    <div style="margin-top:6px;font-size:13px;">AI-Powered Campus Placement Platform</div>
-  </div>
-  <div style="padding:30px 28px;">
-    <p>Dear ${safeName},</p>
-    <p>Welcome to CareerConnect! To complete your registration, please use the verification code below:</p>
-    <div style="margin:28px 0;text-align:center;">
-      <span style="display:inline-block;padding:16px 24px;border-radius:8px;background:#eef5ff;color:#0056b3;font-size:32px;letter-spacing:8px;font-weight:700;">${otp}</span>
-    </div>
-    <p style="text-align:center;font-weight:600;">This OTP is valid for 5 minutes.</p>
-    <div style="margin-top:24px;padding:16px;background:#fff8e8;border-left:4px solid #f0ad4e;font-size:14px;line-height:1.6;">
-      <strong>For your security:</strong><br>
-      Do not share this OTP with anyone.<br>
-      CareerConnect will never ask for your OTP through an unofficial channel.<br>
-      If you did not request this verification, you may safely ignore this email.
-    </div>
-    <p style="margin-top:28px;">Regards,<br><strong>CareerConnect Placement Team</strong></p>
-  </div>
-</div></body></html>`
-    };
-}
-
-app.post('/api/auth/send-otp', async (req, res) => {
+// Student Registration Route
+app.post('/register', async (req, res) => {
     try {
+        const { name, phone, dob, college, department, gender, password } = req.body;
         const email = normalizeEmail(req.body.email);
+        const username = String(req.body.username || '').trim();
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(email)) {
-            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        if (![name, phone, dob, college, department, gender, username, password].every((value) => String(value || '').trim()) ||
+            !emailPattern.test(email)) {
+            return res.status(400).json({ message: 'Please provide valid values for all registration fields.' });
         }
 
-        const requiredFields = ['name', 'phone', 'dob', 'college', 'department', 'gender', 'username', 'password'];
-        if (requiredFields.some((field) => !String(req.body[field] || '').trim())) {
-            return res.status(400).json({ message: 'Please complete all registration fields before requesting an OTP.' });
-        }
-
-        const normalizedUsername = String(req.body.username).trim();
         const [existingStudent, existingUsername] = await Promise.all([
             Student.findOne({ email }).select('_id'),
-            Student.findOne({ username: normalizedUsername }).select('_id')
+            Student.findOne({ username }).select('_id')
         ]);
         if (existingStudent) return res.status(409).json({ message: 'This email is already registered.' });
         if (existingUsername) return res.status(409).json({ message: 'Username already exists.' });
 
-        const existingAttempt = await RegistrationOtp.findOne({ email, verifiedAt: null });
-        const now = Date.now();
-        if (existingAttempt && existingAttempt.resendAt.getTime() > now) {
-            return res.status(429).json({
-                message: 'Please wait before requesting another OTP.',
-                retryAfterSeconds: Math.ceil((existingAttempt.resendAt.getTime() - now) / 1000)
-            });
-        }
-        if (existingAttempt && existingAttempt.requestCount >= OTP_MAX_REQUESTS) {
-            return res.status(429).json({ message: 'Too many OTP requests. Please try again later.' });
-        }
-
-        const transporter = getMailTransporter();
-        if (!transporter) {
-            return res.status(503).json({
-                message: 'Email delivery is not configured. Set real SMTP_USER, SMTP_PASSWORD, and EMAIL_FROM values in .env, then restart the server.'
-            });
-        }
-
-        const otp = String(crypto.randomInt(100000, 1000000));
-        const registrationToken = crypto.randomBytes(32).toString('hex');
-        const registrationData = {
-            name: String(req.body.name).trim(),
-            email,
-            phone: String(req.body.phone).trim(),
-            dob: req.body.dob,
-            college: String(req.body.college).trim(),
-            department: String(req.body.department).trim(),
-            gender: String(req.body.gender).trim(),
-            username: normalizedUsername,
-            passwordHash: await bcrypt.hash(String(req.body.password), 12)
-        };
-
-        await transporter.sendMail({
-            from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-            to: email,
-            ...buildOtpEmail(otp, registrationData.name)
-        });
-
-        const update = {
-            email,
-            otpHash: hashSecret(otp),
-            registrationTokenHash: hashSecret(registrationToken),
-            registrationData,
-            verificationAttempts: 0,
-            requestCount: (existingAttempt?.requestCount || 0) + 1,
-            resendAt: new Date(now + OTP_RESEND_COOLDOWN_MS),
-            expiresAt: new Date(now + OTP_EXPIRY_MS),
-            verifiedAt: null
-        };
-        if (existingAttempt) {
-            await RegistrationOtp.updateOne({ _id: existingAttempt._id }, { $set: update });
-        } else {
-            await RegistrationOtp.create(update);
-        }
-
-        res.json({ message: 'OTP sent successfully to your registered email address.', expiresInSeconds: OTP_EXPIRY_MS / 1000 });
-    } catch (error) {
-        console.error('Registration OTP delivery error:', error.code || error.message || error);
-        const message = ['EAUTH', 'ECONNECTION', 'ETIMEDOUT'].includes(error.code)
-            ? 'Email provider rejected the SMTP configuration. Check SMTP_USER and SMTP_PASSWORD.'
-            : 'Email delivery failed. Please try again later.';
-        res.status(503).json({ message });
-    }
-});
-
-app.post('/api/auth/verify-otp', async (req, res) => {
-    try {
-        const email = normalizeEmail(req.body.email);
-        const otp = String(req.body.otp || '').trim();
-        if (!/^\d{6}$/.test(otp)) {
-            return res.status(400).json({ message: 'Please enter the six-digit OTP sent to your email.' });
-        }
-
-        const attempt = await RegistrationOtp.findOne({ email, verifiedAt: null });
-        if (!attempt) return res.status(400).json({ message: 'OTP not requested or registration attempt has expired.' });
-        if (attempt.expiresAt.getTime() <= Date.now()) {
-            return res.status(400).json({ message: 'This OTP has expired. Please request a new OTP.' });
-        }
-        if (attempt.verificationAttempts >= OTP_MAX_ATTEMPTS) {
-            return res.status(429).json({ message: 'Too many verification attempts. Please request a new OTP.' });
-        }
-
-        const otpMatches = crypto.timingSafeEqual(
-            Buffer.from(hashSecret(otp), 'hex'),
-            Buffer.from(attempt.otpHash, 'hex')
-        );
-        if (!otpMatches) {
-            await RegistrationOtp.updateOne({ _id: attempt._id }, { $inc: { verificationAttempts: 1 } });
-            return res.status(400).json({ message: 'Invalid OTP. Please try again.' });
-        }
-
-        const registrationToken = crypto.randomBytes(32).toString('hex');
-        await RegistrationOtp.updateOne({
-            _id: attempt._id
-        }, {
-            $set: {
-                verifiedAt: new Date(),
-                registrationTokenHash: hashSecret(registrationToken),
-                otpHash: hashSecret(crypto.randomBytes(32).toString('hex'))
-            }
-        });
-        res.json({ message: 'Email verified successfully. You can now complete your registration.', registrationToken });
-    } catch (error) {
-        console.error('Registration OTP verification error:', error.message || error);
-        res.status(500).json({ message: 'Unable to verify the OTP right now. Please try again.' });
-    }
-});
-
-// Student Registration Route
-app.post('/register', async (req, res) => {
-    try {
-        const registrationToken = String(req.body.registrationToken || '').trim();
-        if (!registrationToken) {
-            return res.status(403).json({ message: 'Please verify your email before completing registration.' });
-        }
-
-        const attempt = await RegistrationOtp.findOne({
-            registrationTokenHash: hashSecret(registrationToken),
-            verifiedAt: { $ne: null },
-            expiresAt: { $gt: new Date() }
-        });
-        if (!attempt || !attempt.registrationData?.passwordHash) {
-            return res.status(403).json({ message: 'Your verified registration attempt has expired. Please request a new OTP.' });
-        }
-        const { passwordHash, ...studentData } = attempt.registrationData.toObject
-            ? attempt.registrationData.toObject()
-            : attempt.registrationData;
         const newStudent = new Student({
-            ...studentData,
-            password: passwordHash,
-            emailVerified: true,
-            emailVerifiedAt: attempt.verifiedAt
+            name: String(name).trim(),
+            email,
+            phone: String(phone).trim(),
+            dob,
+            college: String(college).trim(),
+            department: String(department).trim(),
+            gender: String(gender).trim(),
+            username,
+            password: await bcrypt.hash(String(password), 12)
         });
 
         try {
             await newStudent.save();
         } catch (error) {
             if (error.code === 11000) {
-                return res.status(400).json({ message: 'Username or email already exists.' });
+                return res.status(409).json({ message: 'Username already exists.' });
             }
             throw error;
         }
-        await RegistrationOtp.deleteOne({ _id: attempt._id });
         res.status(201).json({ message: 'Registration successful', user: { name: newStudent.name, username: newStudent.username } });
     } catch (error) {
         if (error.code === 11000) {
@@ -1970,40 +1759,6 @@ app.post('/login', async (req, res) => {
             }
         });
 
-        // Optional passwordless login. Existing password login remains the default unless explicitly enabled.
-        app.post('/api/auth/otp/request', async (req, res) => {
-            if (process.env.OTP_LOGIN_ENABLED !== 'true') return res.status(404).json({ error: 'OTP login is not enabled.' });
-            const username = String(req.body.username || '').trim();
-            const student = await Student.findOne({ username });
-            if (!student) return res.status(200).json({ message: 'If the account exists, an OTP will be delivered.' });
-            const code = String(crypto.randomInt(100000, 1000000));
-            await LoginOtp.deleteMany({ username });
-            await LoginOtp.create({ username, codeHash: crypto.createHash('sha256').update(code).digest('hex'), expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
-            if (process.env.OTP_WEBHOOK_URL) {
-                try { await axios.post(process.env.OTP_WEBHOOK_URL, { to: student.email || student.phone, code, username }); }
-                catch (error) { console.warn('OTP provider delivery failed:', error.message); return res.status(503).json({ error: 'OTP delivery is temporarily unavailable.' }); }
-            } else {
-                console.warn(`OTP provider is not configured; OTP not delivered for ${username}.`);
-                return res.status(503).json({ error: 'OTP delivery is not configured.' });
-            }
-            res.json({ message: 'OTP sent.' });
-        });
-
-        app.post('/api/auth/otp/verify', async (req, res) => {
-            if (process.env.OTP_LOGIN_ENABLED !== 'true') return res.status(404).json({ error: 'OTP login is not enabled.' });
-            const username = String(req.body.username || '').trim();
-            const otp = String(req.body.otp || '').trim();
-            const record = await LoginOtp.findOne({ username, consumedAt: null, expiresAt: { $gt: new Date() } });
-            if (!record || record.attempts >= 5 || crypto.createHash('sha256').update(otp).digest('hex') !== record.codeHash) {
-                if (record) await LoginOtp.updateOne({ _id: record._id }, { $inc: { attempts: 1 } });
-                return res.status(401).json({ error: 'Invalid or expired OTP.' });
-            }
-            await LoginOtp.updateOne({ _id: record._id }, { $set: { consumedAt: new Date() } });
-            const student = await Student.findOne({ username });
-            const token = jwt.sign({ username: student.username, role: 'student' }, process.env.JWT_SECRET || 'careerconnect-development-secret', { expiresIn: '8h' });
-            res.cookie('careerconnect_session', token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 8 * 60 * 60 * 1000 });
-            res.json({ message: 'Login successful', token, user: { name: student.name, username: student.username, email: student.email, department: student.department } });
-        });
     } catch (error) {
         res.status(500).json({ message: 'Error during login', error });
     }
